@@ -1,6 +1,5 @@
 <?php
 // obtener_productos.php
-//Version de productos
 header('Content-Type: application/json; charset=utf-8');
 
 // Configuración de la conexión a la base de datos ZervePos local
