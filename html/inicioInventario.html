@@ -42,29 +42,26 @@
     </aside>
 
     <main class="contenido">
-        <h2 id="subtituloBienvenida">Bienvenido</h2>
+        <h2 id="subtituloBienvenida">Inventarios</h2>
         <p>Selecciona una opción del menú o una de las tarjetas para comenzar a trabajar con el sistema.</p>
 
         <div class="tarjetas">
+            <div class="tarjeta" onclick="location.href='inventarioConsulta.html'" style="cursor: pointer;">
+                <h3>Consulta</h3>
+                <p>Consulta los productos de los inventarios.</p>
+            </div>
+
             <div class="tarjeta" onclick="location.href='productos.html'" style="cursor: pointer;">
-                <h3>Productos</h3>
-                <p>Administrar productos del inventario.</p>
+                <h3>Registrar Entradas</h3>
+                <p>Registrar productos que llegan al inventario.</p>
             </div>
 
-            <div class="tarjeta" style="cursor: pointer;">
-                <h3>Entradas</h3>
-                <p>Registrar productos que llegan al almacén.</p>
+            <div class="tarjeta" onclick="location.href='productos.html'" style="cursor: pointer;">
+                <h3>Registrar Salidas</h3>
+                <p>Registrar productos que se venden o retiran del invetario.</p>
             </div>
 
-            <div class="tarjeta" style="cursor: pointer;">
-                <h3>Salidas</h3>
-                <p>Registrar productos que se venden o retiran.</p>
-            </div>
-
-            <div class="tarjeta" style="cursor: pointer;">
-                <h3>Reportes</h3>
-                <p>Consultar reportes del inventario.</p>
-            </div>
+            
         </div>
     </main>
 
