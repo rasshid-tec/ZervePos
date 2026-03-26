@@ -23,7 +23,7 @@
                 <li><a href="productos.html">Productos</a></li>
                 <li><a href="clientes.html">Clientes</a></li>
                 <li><a href="inicioinventariodueno.html">Inventario</a></li>
-                <li><a href="reportes.html">Reportes</a></li>
+                <li><a href="#">Reportes</a></li>
                 <li><a href="usuarios.html">Usuarios</a></li>
                 <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
             </ul>
@@ -80,7 +80,7 @@
         function cerrarSesion() {
             if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
                 sessionStorage.clear();
-                window.location.href = "../index.html";
+                window.location.href = "../../index.html";
             }
         }
     </script>

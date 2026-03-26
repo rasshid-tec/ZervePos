@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Entradas - Inventario</title>
+    <link rel="stylesheet" href="../../css/Dueño/EntradasDueno.css">
+</head>
+
+<body>
+
+    <header>
+        <h1 id="mensajeBienvenida">Cargando...</h1>
+    </header>
+
+    <div class="contenedor">
+
+        <aside class="menu">
+            <ul>
+                <li><a href="inicioDueno.html">Inicio</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="clientes.html">Clientes</a></li>
+                <li class="inicio-activo"><a href="InicioInventarioDueno.html">Inventario</a></li>
+                <li><a href="reportes.html">Reportes</a></li>
+                <li><a href="usuarios.html">Usuarios</a></li>
+                <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+            </ul>
+        </aside>
+
+        <main class="contenido">
+            <h2>Registrar Entrada</h2>
+            <p>Completa los datos para registrar una entrada al inventario.</p>
+
+            <div class="formulario-entrada">
+
+                <!-- FILA 1: Sucursal y Tipo -->
+                <div class="fila">
+                    <div class="campo">
+                        <label>Sucursal *</label>
+                        <select id="selectSucursal">
+                            <option value="">-- Selecciona sucursal --</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label>Tipo de Entrada *</label>
+                        <select id="selectTipo">
+                            <option value="">-- Selecciona tipo --</option>
+                            <option value="COMPRA">Compra</option>
+                            <option value="DEVOLUCION">Devolución</option>
+                            <option value="AJUSTE">Ajuste</option>
+                            <option value="TRANSFERENCIA">Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- FILA 2: Descripción -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label>Motivo / Descripción *</label>
+                        <input type="text" id="inputDescripcion" placeholder="Describe el motivo de la entrada..." maxlength="100">
+                    </div>
+                </div>
+
+                <!-- CAMPO FACTURADO -->
+                <div class="fila">
+                    <div class="campo">
+                        <label>¿Está facturado? *</label>
+                        <select id="selectFacturado" onchange="toggleFactura()">
+                            <option value="">-- Selecciona --</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO FACTURA -->
+                <div class="seccion-factura" id="seccionFactura" style="display:none;">
+                    <h3>📄 Datos de Factura</h3>
+                    <div class="fila">
+                        <div class="campo">
+                            <label>Proveedor *</label>
+                            <div class="campo-con-boton">
+                                <select id="selectProveedor">
+                                    <option value="">-- Selecciona proveedor --</option>
+                                </select>
+                                <button class="btn-nuevo" onclick="abrirModalProveedor()">+ Nuevo</button>
+                            </div>
+                        </div>
+                        <div class="campo">
+                            <label>RFC *</label>
+                            <input type="text" id="inputRFC" placeholder="Ej. ABC123456XYZ" maxlength="30">
+                        </div>
+                    </div>
+                    <div class="fila">
+                        <div class="campo">
+                            <label>Fecha de Factura *</label>
+                            <input type="date" id="inputFechaFactura">
+                        </div>
+                        <div class="campo">
+                            <label>Total Factura *</label>
+                            <input type="number" id="inputTotalFactura" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUSCADOR DE PRODUCTOS -->
+                <div class="seccion-productos">
+                    <h3>Productos</h3>
+                    <div class="barra-busqueda">
+                        <input type="text" id="inputBusqueda" placeholder="🔍 Buscar producto por nombre..." onkeyup="filtrarProductos()">
+                    </div>
+                    <div class="lista-productos" id="listaProductos">
+                        <p class="placeholder-texto">Escribe para buscar productos...</p>
+                    </div>
+                </div>
+
+                <!-- TABLA DE PRODUCTOS AGREGADOS -->
+                <div class="seccion-tabla" id="seccionTabla" style="display:none;">
+                    <h3>Productos agregados</h3>
+                    <div class="scroll-tabla">
+                        <table class="tabla-agregados">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Compra</th>
+                                    <th>Lote</th>
+                                    <th>Vencimiento</th>
+                                    <th>Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaAgregados"></tbody>
+                        </table>
+                    </div>
+                    <div class="total-entrada">
+                        <span>Total estimado: </span>
+                        <strong id="totalEntrada">$0.00</strong>
+                    </div>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="fila-boton">
+                    <button class="btn-guardar" onclick="guardarEntrada()">✅ Registrar Entrada</button>
+                    <button class="btn-cancelar" onclick="cancelarEntrada()">✖ Cancelar</button>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL NUEVO PROVEEDOR -->
+    <div class="modal-overlay" id="modalProveedor" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ Nuevo Proveedor</h3>
+                <button class="btn-cerrar-modal" onclick="cerrarModalProveedor()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="campo">
+                    <label>Nombre de la Empresa *</label>
+                    <input type="text" id="modalNombreEmpresa" placeholder="Ej. Distribuidora SA de CV" maxlength="30">
+                </div>
+                <div class="campo">
+                    <label>Nombre del Contacto</label>
+                    <input type="text" id="modalNombre" placeholder="Ej. Juan" maxlength="30">
+                </div>
+                <div class="campo">
+                    <label>Apellidos del Contacto</label>
+                    <input type="text" id="modalApellidos" placeholder="Ej. García López" maxlength="30">
+                </div>
+                <div class="campo">
+                    <label>Teléfono</label>
+                    <input type="text" id="modalTelefono" placeholder="Ej. 3111234567" maxlength="30">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-guardar" onclick="guardarProveedor()">✅ Guardar Proveedor</button>
+                <button class="btn-cancelar" onclick="cerrarModalProveedor()">✖ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Sistema de Inventario © 2026</p>
+    </footer>
+
+    <script>
+        let todosLosProductos = [];
+        let productosAgregados = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const usuario = sessionStorage.getItem("usuarioLogueado");
+            if (!usuario) { window.location.href = "../index.html"; return; }
+            document.getElementById("mensajeBienvenida").textContent = `Bienvenido, ${usuario}`;
+            cargarSucursales();
+            cargarProveedores();
+            cargarProductos();
+        });
+
+        // ── TOGGLE FACTURA ──────────────────────────────────────────
+        function toggleFactura() {
+            const val = document.getElementById('selectFacturado').value;
+            document.getElementById('seccionFactura').style.display = val === 'si' ? 'block' : 'none';
+            if (val !== 'si') {
+                document.getElementById('selectProveedor').value    = '';
+                document.getElementById('inputRFC').value           = '';
+                document.getElementById('inputFechaFactura').value  = '';
+                document.getElementById('inputTotalFactura').value  = '';
+            }
+        }
+
+        // ── CARGA DE DATOS ──────────────────────────────────────────
+        function cargarSucursales() {
+            fetch('../../php/obtener_sucursales.php')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status !== 'ok') return;
+                    const sel = document.getElementById('selectSucursal');
+                    res.data.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.SucursalId;
+                        opt.textContent = s.NombreSucursal;
+                        sel.appendChild(opt);
+                    });
+                });
+        }
+
+        function cargarProveedores() {
+            fetch('../../php/obtener_proveedores.php')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status !== 'ok') return;
+                    const sel = document.getElementById('selectProveedor');
+                    // Guardar selección actual
+                    const valorActual = sel.value;
+                    // Limpiar y volver a llenar
+                    sel.innerHTML = '<option value="">-- Selecciona proveedor --</option>';
+                    res.data.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.ProveedorId;
+                        opt.textContent = p.NombreEmpresa + (p.Nombre ? ` (${p.Nombre} ${p.Apellidos})` : '');
+                        sel.appendChild(opt);
+                    });
+                    // Restaurar selección si había una
+                    if (valorActual) sel.value = valorActual;
+                });
+        }
+
+        function cargarProductos() {
+            fetch('../../php/obtener_productos.php')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status !== 'ok') return;
+                    todosLosProductos = res.data;
+                });
+        }
+
+        // ── MODAL PROVEEDOR ─────────────────────────────────────────
+        function abrirModalProveedor() {
+            document.getElementById('modalProveedor').style.display = 'flex';
+        }
+
+        function cerrarModalProveedor() {
+            document.getElementById('modalProveedor').style.display = 'none';
+            document.getElementById('modalNombreEmpresa').value = '';
+            document.getElementById('modalNombre').value        = '';
+            document.getElementById('modalApellidos').value     = '';
+            document.getElementById('modalTelefono').value      = '';
+        }
+
+        function guardarProveedor() {
+            const nombreEmpresa = document.getElementById('modalNombreEmpresa').value.trim();
+            const nombre        = document.getElementById('modalNombre').value.trim();
+            const apellidos     = document.getElementById('modalApellidos').value.trim();
+            const telefono      = document.getElementById('modalTelefono').value.trim();
+
+            if (!nombreEmpresa) {
+                alert('El nombre de la empresa es obligatorio.');
+                return;
+            }
+
+            fetch('../../php/insertar_proveedor.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombreEmpresa, nombre, apellidos, telefono })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'ok') {
+                    alert('✅ Proveedor agregado correctamente.');
+                    cerrarModalProveedor();
+                    // Recargar lista y seleccionar el nuevo
+                    cargarProveedoresYSeleccionar(res.nuevoId);
+                } else {
+                    alert('❌ Error: ' + res.message);
+                }
+            })
+            .catch(err => alert('Error de conexión: ' + err));
+        }
+
+        function cargarProveedoresYSeleccionar(idSeleccionar) {
+            fetch('../../php/obtener_proveedores.php')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status !== 'ok') return;
+                    const sel = document.getElementById('selectProveedor');
+                    sel.innerHTML = '<option value="">-- Selecciona proveedor --</option>';
+                    res.data.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.ProveedorId;
+                        opt.textContent = p.NombreEmpresa + (p.Nombre ? ` (${p.Nombre} ${p.Apellidos})` : '');
+                        sel.appendChild(opt);
+                    });
+                    if (idSeleccionar) sel.value = idSeleccionar;
+                });
+        }
+
+        // ── BUSCADOR ────────────────────────────────────────────────
+        function filtrarProductos() {
+            const texto = document.getElementById('inputBusqueda').value.toLowerCase().trim();
+            const lista = document.getElementById('listaProductos');
+
+            if (texto === '') {
+                lista.innerHTML = '<p class="placeholder-texto">Escribe para buscar productos...</p>';
+                return;
+            }
+
+            const filtrados = todosLosProductos.filter(p =>
+                p.NombreProducto.toLowerCase().includes(texto)
+            );
+
+            if (filtrados.length === 0) {
+                lista.innerHTML = '<p class="placeholder-texto">No se encontraron productos.</p>';
+                return;
+            }
+
+            lista.innerHTML = filtrados.map(p => `
+                <div class="item-producto">
+                    <span class="nombre-prod">${p.NombreProducto}</span>
+                    <span class="precio-prod">$${parseFloat(p.PrecioUnitario).toFixed(2)}</span>
+                    <div class="controles-agregar">
+                        <input type="number" class="input-cantidad-busqueda" id="cant_${p.ProductoId}" min="1" value="1">
+                        <button class="btn-agregar" onclick="agregarProducto(${p.ProductoId}, '${p.NombreProducto.replace(/'/g, "\\'")}', ${p.PrecioUnitario})">+ Agregar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ── AGREGAR PRODUCTO ────────────────────────────────────────
+        function agregarProducto(id, nombre, precioRef) {
+            const inputCant = document.getElementById(`cant_${id}`);
+            const cantidad  = inputCant ? parseInt(inputCant.value) : 1;
+
+            if (cantidad < 1) {
+                alert('La cantidad debe ser mayor a 0.');
+                return;
+            }
+
+            const existente = productosAgregados.find(p => p.ProductoId === id);
+            if (existente) {
+                existente.Cantidad = parseInt(existente.Cantidad) + cantidad;
+                renderizarTabla();
+                return;
+            }
+
+            productosAgregados.push({
+                ProductoId: id, NombreProducto: nombre,
+                Cantidad: cantidad, PrecioCompra: precioRef,
+                Lote: '', FechaVencimiento: ''
+            });
+
+            document.getElementById('inputBusqueda').value = '';
+            document.getElementById('listaProductos').innerHTML = '<p class="placeholder-texto">Escribe para buscar productos...</p>';
+            renderizarTabla();
+        }
+
+        // ── TABLA ───────────────────────────────────────────────────
+        function renderizarTabla() {
+            const tbody = document.getElementById('cuerpoTablaAgregados');
+            document.getElementById('seccionTabla').style.display = productosAgregados.length ? 'block' : 'none';
+
+            tbody.innerHTML = productosAgregados.map((p, i) => `
+                <tr>
+                    <td>${p.ProductoId}</td>
+                    <td>${p.NombreProducto}</td>
+                    <td><input type="number" class="input-tabla" min="1" value="${p.Cantidad}" onchange="actualizarCampo(${i}, 'Cantidad', this.value)"></td>
+                    <td><input type="number" class="input-tabla" min="0.01" step="0.01" value="${parseFloat(p.PrecioCompra).toFixed(2)}" onchange="actualizarCampo(${i}, 'PrecioCompra', this.value)"></td>
+                    <td><input type="text" class="input-tabla" placeholder="Lote" value="${p.Lote}" onchange="actualizarCampo(${i}, 'Lote', this.value)"></td>
+                    <td><input type="date" class="input-tabla" value="${p.FechaVencimiento}" onchange="actualizarCampo(${i}, 'FechaVencimiento', this.value)"></td>
+                    <td><button class="btn-quitar" onclick="quitarProducto(${i})">✖</button></td>
+                </tr>
+            `).join('');
+
+            calcularTotal();
+        }
+
+        function actualizarCampo(index, campo, valor) {
+            productosAgregados[index][campo] = valor;
+            calcularTotal();
+        }
+
+        function quitarProducto(index) {
+            productosAgregados.splice(index, 1);
+            renderizarTabla();
+        }
+
+        function calcularTotal() {
+            const total = productosAgregados.reduce((sum, p) => sum + (parseFloat(p.Cantidad) * parseFloat(p.PrecioCompra)), 0);
+            document.getElementById('totalEntrada').textContent = `$${total.toFixed(2)}`;
+        }
+
+        // ── GUARDAR ENTRADA ─────────────────────────────────────────
+        function guardarEntrada() {
+            const sucursalId  = document.getElementById('selectSucursal').value;
+            const tipo        = document.getElementById('selectTipo').value;
+            const descripcion = document.getElementById('inputDescripcion').value.trim();
+            const facturado   = document.getElementById('selectFacturado').value;
+
+            if (!sucursalId || !tipo || !descripcion || !facturado) {
+                alert('Por favor completa todos los campos obligatorios (*).');
+                return;
+            }
+            if (productosAgregados.length === 0) {
+                alert('Agrega al menos un producto a la entrada.');
+                return;
+            }
+
+            let proveedorId = null, rfc = null, fechaFactura = null, totalFactura = null;
+
+            if (facturado === 'si') {
+                proveedorId  = document.getElementById('selectProveedor').value;
+                rfc          = document.getElementById('inputRFC').value.trim();
+                fechaFactura = document.getElementById('inputFechaFactura').value;
+                totalFactura = document.getElementById('inputTotalFactura').value;
+
+                if (!proveedorId || !rfc || !fechaFactura || !totalFactura) {
+                    alert('Por favor completa todos los datos de la factura.');
+                    return;
+                }
+            }
+
+            const payload = {
+                sucursalId, tipo, descripcion, facturado,
+                proveedorId, rfc, fechaFactura, totalFactura,
+                productos: productosAgregados
+            };
+
+            fetch('../../php/registrar_entradav3.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'ok') {
+                    alert('✅ Entrada registrada correctamente.');
+                    cancelarEntrada();
+                } else {
+                    alert('❌ Error: ' + res.message);
+                }
+            })
+            .catch(err => alert('Error de conexión: ' + err));
+        }
+
+        function cancelarEntrada() {
+            productosAgregados = [];
+            renderizarTabla();
+            document.getElementById('selectSucursal').value    = '';
+            document.getElementById('selectTipo').value        = '';
+            document.getElementById('selectProveedor').value   = '';
+            document.getElementById('inputRFC').value          = '';
+            document.getElementById('inputDescripcion').value  = '';
+            document.getElementById('inputBusqueda').value     = '';
+            document.getElementById('selectFacturado').value   = '';
+            document.getElementById('inputFechaFactura').value = '';
+            document.getElementById('inputTotalFactura').value = '';
+            document.getElementById('seccionFactura').style.display = 'none';
+            document.getElementById('listaProductos').innerHTML = '<p class="placeholder-texto">Escribe para buscar productos...</p>';
+        }
+
+        function cerrarSesion() {
+            if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+                sessionStorage.clear();
+                window.location.href = "../index.html";
+            }
+        }
+    </script>
+
+</body>
+</html>

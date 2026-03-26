@@ -27,7 +27,11 @@
 
     <main class="contenido">
         <div class="barra-superior">
-            <input type="text" id="inputBusqueda" placeholder="Buscar producto..." onkeyup="filtrarProducto()">
+            <input type="text" id="inputBusqueda" placeholder="Buscar producto..." onkeyup="filtrarDatos()">
+            
+            <select id="selectSucursal" onchange="filtrarDatos()">
+                <option value="">-- Todas las sucursales --</option>
+            </select>
         </div>
 
         <table class="tabla-productos">
@@ -56,12 +60,28 @@
             .then(resultado => {
                 if (resultado.status === 'ok') {
                     listaExistenciasGlobal = resultado.data;
+                    cargarOpcionesSucursal(listaExistenciasGlobal); // Llenamos el filtro desplegable
                     llenarTabla(listaExistenciasGlobal);
                 } else {
                     console.error("Error BD:", resultado.message);
                 }
             })
             .catch(error => console.error("Error en fetch:", error));
+    }
+
+    // NUEVA FUNCIÓN: Extrae las sucursales únicas y llena el <select>
+    function cargarOpcionesSucursal(datos) {
+        const select = document.getElementById('selectSucursal');
+        
+        // Usamos Set para obtener solo nombres de sucursales únicos
+        const sucursalesUnicas = [...new Set(datos.map(item => item.NombreSucursal))];
+
+        sucursalesUnicas.forEach(sucursal => {
+            const option = document.createElement('option');
+            option.value = sucursal;
+            option.textContent = sucursal;
+            select.appendChild(option);
+        });
     }
 
     function llenarTabla(datos) {
@@ -88,17 +108,18 @@
         tbody.innerHTML = filas;
     }
 
-    function filtrarProducto() {
-        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+    // FUNCIÓN ACTUALIZADA: Filtra por nombre y por sucursal simultáneamente
+    function filtrarDatos() {
+        const textoBusqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+        const sucursalSeleccionada = document.getElementById('selectSucursal').value;
 
-        if (texto === '') {
-            llenarTabla(listaExistenciasGlobal);
-            return;
-        }
+        const filtrados = listaExistenciasGlobal.filter(item => {
+            const coincideTexto = item.NombreProducto.toLowerCase().includes(textoBusqueda);
+            // Si el select está vacío (""), muestra todas; si no, debe coincidir exactamente
+            const coincideSucursal = (sucursalSeleccionada === "") || (item.NombreSucursal === sucursalSeleccionada);
 
-        const filtrados = listaExistenciasGlobal.filter(item =>
-            item.NombreProducto.toLowerCase().includes(texto)
-        );
+            return coincideTexto && coincideSucursal;
+        });
 
         llenarTabla(filtrados);
     }
