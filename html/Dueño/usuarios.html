@@ -30,13 +30,11 @@
 
     <main class="contenido">
 
-        <!-- BARRA SUPERIOR -->
         <div class="barra-superior">
             <input type="text" id="inputBusqueda" placeholder="Buscar por nombre o usuario..." onkeyup="filtrarUsuarios()">
-            <button class="btn-agregar" onclick="mostrarFormulario()">+ Nuevo Usuario</button>
+            <button class="btn-agregar" onclick="mostrarFormularioNuevo()">+ Nuevo Usuario</button>
         </div>
 
-        <!-- TABLA -->
         <table class="tabla-usuarios">
             <thead>
                 <tr>
@@ -60,6 +58,9 @@
                 <h2 id="modalTitulo">Nuevo Usuario</h2>
 
                 <form id="formUsuario">
+                    <input type="hidden" name="modoEdicion" id="modoEdicion" value="nuevo">
+                    <input type="hidden" name="EmpleadoId"  id="empleadoId"  value="">
+                    <input type="hidden" name="UsuariosId"  id="usuariosId"  value="">
 
                     <div class="seccion-form">
                         <h3>Datos del Empleado</h3>
@@ -76,7 +77,7 @@
                         <div class="fila">
                             <div class="campo">
                                 <label>Fecha de Nacimiento <span class="requerido">*</span></label>
-                                <input type="date" name="fechaNacimiento" required>
+                                <input type="date" name="fechaNacimiento" id="fechaNacimiento" required>
                             </div>
                             <div class="campo">
                                 <label>Teléfono</label>
@@ -120,15 +121,18 @@
                                 <input type="text" name="usuario" placeholder="Nombre de usuario" required>
                             </div>
                             <div class="campo">
-                                <label>Contraseña <span class="requerido">*</span></label>
-                                <input type="password" name="contrasena" placeholder="Contraseña" required>
+                                <label id="labelContrasena">Contraseña <span class="requerido">*</span></label>
+                                <input type="password" name="contrasena" id="inputContrasena" placeholder="Contraseña">
+                                <small id="smallContrasena" style="display:none; color:#888;">Dejar vacío para no cambiar la contraseña</small>
                             </div>
                         </div>
                     </div>
 
                     <div class="botones-modal">
+                        <!-- Botón eliminar, solo visible en modo editar -->
+                        <button type="button" class="btn-eliminar-modal" id="btnEliminarModal" style="display:none; margin-right:auto;" onclick="eliminarDesdeModal()">Eliminar Usuario</button>
                         <button type="button" class="btn-cancelar" onclick="cerrarFormulario()">Cancelar</button>
-                        <button type="submit" class="btn-guardar">Crear Usuario</button>
+                        <button type="submit" class="btn-guardar" id="btnGuardar">Crear Usuario</button>
                     </div>
 
                 </form>
@@ -146,12 +150,11 @@
     let listaUsuariosGlobal = [];
 
     document.addEventListener("DOMContentLoaded", () => {
-        const rol = sessionStorage.getItem("rolUsuario");
-        document.getElementById("rolFooter").textContent = rol || "—";
+        document.getElementById("rolFooter").textContent = sessionStorage.getItem("rolUsuario") || "—";
         cargarUsuarios();
     });
 
-    // ── CARGAR USUARIOS ──
+    // ── CARGAR ──
     function cargarUsuarios() {
         fetch('../../php/obtener_usuarios.php')
             .then(r => r.json())
@@ -159,40 +162,34 @@
                 if (resultado.status === 'ok') {
                     listaUsuariosGlobal = resultado.data;
                     llenarTabla(listaUsuariosGlobal);
-                } else {
-                    console.error("Error:", resultado.message);
-                }
+                } else console.error("Error:", resultado.message);
             })
             .catch(err => console.error("Error fetch:", err));
     }
 
-    // ── LLENAR TABLA ──
+    // ── TABLA ──
     function llenarTabla(usuarios) {
         const tbody = document.getElementById('cuerpoTabla');
         if (usuarios.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No se encontraron usuarios</td></tr>';
             return;
         }
-        let filas = '';
         let contador = 1;
-        usuarios.forEach(u => {
+        tbody.innerHTML = usuarios.map(u => {
             const badgeClass = u.Rol === 'Administrador' ? 'badge-admin' :
                                u.Rol === 'Dueño'         ? 'badge-dueno' : 'badge-cajero';
-            filas += `
-                <tr>
-                    <td>${contador}</td>
-                    <td>${u.Nombre} ${u.Apellidos}</td>
-                    <td><span class="tag-usuario">${u.NombreUsuario}</span></td>
-                    <td><span class="badge ${badgeClass}">${u.Rol}</span></td>
-                    <td>${u.Telefono || '—'}</td>
-                    <td>${u.Ciudad || '—'}</td>
-                    <td class="acciones">
-                        <button class="btn-eliminar" onclick="eliminarUsuario(${u.UsuariosId}, '${u.NombreUsuario}')">Eliminar</button>
-                    </td>
-                </tr>`;
-            contador++;
-        });
-        tbody.innerHTML = filas;
+            return `<tr>
+                <td>${contador++}</td>
+                <td>${u.Nombre} ${u.Apellidos}</td>
+                <td><span class="tag-usuario">${u.NombreUsuario}</span></td>
+                <td><span class="badge ${badgeClass}">${u.Rol}</span></td>
+                <td>${u.Telefono || '—'}</td>
+                <td>${u.Ciudad || '—'}</td>
+                <td class="acciones">
+                    <button class="editar" onclick="mostrarFormularioEditar(${u.UsuariosId})">Editar</button>
+                </td>
+            </tr>`;
+        }).join('');
     }
 
     // ── FILTRAR ──
@@ -204,36 +201,91 @@
         ));
     }
 
-    // ── MOSTRAR / CERRAR MODAL ──
-    function mostrarFormulario() {
-        document.getElementById('modalTitulo').textContent = 'Nuevo Usuario';
+    // ── ABRIR MODAL NUEVO ──
+    function mostrarFormularioNuevo() {
         document.getElementById('formUsuario').reset();
+        document.getElementById('modoEdicion').value = 'nuevo';
+        document.getElementById('empleadoId').value  = '';
+        document.getElementById('usuariosId').value  = '';
+        document.getElementById('modalTitulo').textContent = 'Nuevo Usuario';
+        document.getElementById('btnGuardar').textContent  = 'Crear Usuario';
+        document.getElementById('btnEliminarModal').style.display = 'none';
+        document.getElementById('inputContrasena').required = true;
+        document.getElementById('smallContrasena').style.display = 'none';
+        document.getElementById('labelContrasena').innerHTML = 'Contraseña <span class="requerido">*</span>';
         document.getElementById('modalOverlay').classList.add('activo');
     }
 
-    function cerrarFormulario(event) {
-        if (!event || event.target === document.getElementById('modalOverlay')) {
-            document.getElementById('modalOverlay').classList.remove('activo');
+    // ── ABRIR MODAL EDITAR ──
+    function mostrarFormularioEditar(usuariosId) {
+        const u = listaUsuariosGlobal.find(x => x.UsuariosId === usuariosId);
+        if (!u) return;
+
+        const form = document.getElementById('formUsuario');
+        form.reset();
+
+        // Llenar campos
+        form.querySelector('[name="nombre"]').value      = u.Nombre || '';
+        form.querySelector('[name="apellidos"]').value   = u.Apellidos || '';
+        form.querySelector('[name="telefono"]').value    = u.Telefono || '';
+        form.querySelector('[name="domicilio"]').value   = u.Direccion || '';
+        form.querySelector('[name="ciudad"]').value      = u.Ciudad || '';
+        form.querySelector('[name="codigoPostal"]').value = u.CodigoPostal || '';
+        form.querySelector('[name="rol"]').value         = u.Rol || '';
+        form.querySelector('[name="usuario"]').value     = u.NombreUsuario || '';
+        form.querySelector('[name="contrasena"]').value  = '';
+
+        // Fecha de nacimiento
+        if (u.FechaNacimiento) {
+            document.getElementById('fechaNacimiento').value = u.FechaNacimiento.substring(0, 10);
         }
+
+        // Campos ocultos
+        document.getElementById('modoEdicion').value = 'editar';
+        document.getElementById('empleadoId').value  = u.EmpleadoId;
+        document.getElementById('usuariosId').value  = u.UsuariosId;
+
+        // Ajustar modal para modo editar
+        document.getElementById('modalTitulo').textContent = 'Editar Usuario';
+        document.getElementById('btnGuardar').textContent  = 'Actualizar Usuario';
+        document.getElementById('btnEliminarModal').style.display = 'inline-block';
+        document.getElementById('inputContrasena').required = false;
+        document.getElementById('smallContrasena').style.display = 'block';
+        document.getElementById('labelContrasena').innerHTML = 'Contraseña';
+
+        document.getElementById('modalOverlay').classList.add('activo');
     }
 
-    // ── CREAR USUARIO ──
+    // ── CERRAR MODAL ──
+    function cerrarFormulario(event) {
+        if (!event || event.target === document.getElementById('modalOverlay'))
+            document.getElementById('modalOverlay').classList.remove('activo');
+    }
+
+    // ── SUBMIT ──
     document.getElementById('formUsuario').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = Object.fromEntries(new FormData(e.target));
+        const modo = formData.modoEdicion;
+
+        const url = modo === 'editar' ? '../../php/actualizar_usuario.php' : '../../php/insertar_usuario.php';
+
         try {
-            const res = await fetch('../../php/insertar_usuario.php', {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
             const data = await res.json();
-            if (data.success) {
-                alert("Usuario creado correctamente (ID: " + data.empleadoId + ")");
+
+            // insertar_usuario.php usa "success", actualizar_usuario.php usa "status"
+            const exito = data.success === true || data.status === 'ok';
+            if (exito) {
+                alert(modo === 'editar' ? "Usuario actualizado correctamente." : "Usuario creado correctamente (ID: " + data.empleadoId + ")");
                 cerrarFormulario();
                 cargarUsuarios();
             } else {
-                alert("Error: " + (data.message || "No se pudo crear el usuario"));
+                alert("Error: " + (data.message || "No se pudo guardar el usuario"));
             }
         } catch (err) {
             console.error(err);
@@ -241,34 +293,38 @@
         }
     });
 
-    // ── ELIMINAR USUARIO ──
-    function eliminarUsuario(usuarioId, nombreUsuario) {
-        if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombreUsuario}"?\nEsta acción también eliminará su registro de empleado.`)) {
-            fetch('../../php/eliminar_usuario.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ UsuariosId: usuarioId })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    alert("Usuario eliminado correctamente.");
-                    cargarUsuarios();
-                } else {
-                    alert("Error al eliminar: " + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Error de conexión con el servidor.");
-            });
-        }
+    // ── ELIMINAR DESDE MODAL ──
+    function eliminarDesdeModal() {
+        const usuariosId   = document.getElementById('usuariosId').value;
+        const nombreUsuario = document.getElementById('formUsuario').querySelector('[name="usuario"]').value;
+
+        if (!confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombreUsuario}"?\nEsta acción también eliminará su registro de empleado.`)) return;
+
+        fetch('../../php/eliminar_usuario.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ UsuariosId: usuariosId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert("Usuario eliminado correctamente.");
+                cerrarFormulario();
+                cargarUsuarios();
+            } else {
+                alert("Error al eliminar: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error de conexión con el servidor.");
+        });
     }
 
     function cerrarSesion() {
         if (confirm("¿Deseas cerrar sesión?")) {
             sessionStorage.clear();
-            window.location.href = "../../index.html";
+            window.location.href = "../index.html";
         }
     }
 </script>

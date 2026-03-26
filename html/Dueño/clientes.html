@@ -16,11 +16,11 @@
 
     <aside class="menu">
         <ul>
-           <div class="inicio">
-                <li><a href="inicioDueno.html">Inicio</a></li>
-            </div>
+            <li><a href="inicioDueno.html">Inicio</a></li>
             <li><a href="productos.html">Productos</a></li>
-            <li><a href="clientes.html">Clientes</a></li>
+            <div class="clientes-activo">
+                <li><a href="#">Clientes</a></li>
+            </div>
             <li><a href="inventario.html">Inventario</a></li>
             <li><a href="reportes.html">Reportes</a></li>
             <li><a href="usuarios.html">Usuarios</a></li>
@@ -30,13 +30,11 @@
 
     <main class="contenido">
 
-        <!-- ── BARRA SUPERIOR ── -->
         <div class="barra-superior">
             <input type="text" id="inputBusqueda" placeholder="Buscar cliente por nombre o negocio..." onkeyup="filtrarClientes()">
-            <button class="btn-agregar" onclick="mostrarFormulario()">+ Nuevo Cliente</button>
+            <button class="btn-agregar" onclick="mostrarFormularioNuevo()">+ Nuevo Cliente</button>
         </div>
 
-        <!-- ── TABLA DE CLIENTES ── -->
         <table class="tabla-clientes">
             <thead>
                 <tr>
@@ -53,12 +51,14 @@
             </tbody>
         </table>
 
-        <!-- ── MODAL FORMULARIO ── -->
+        <!-- MODAL -->
         <div class="modal-overlay" id="modalOverlay" onclick="cerrarFormulario(event)">
             <div class="modal">
                 <h2 id="modalTitulo">Nuevo Cliente</h2>
 
                 <form id="formCliente">
+
+                    <input type="hidden" name="modoEdicion" id="modoEdicion" value="nuevo">
 
                     <div class="seccion-form">
                         <h3>Datos del Negocio</h3>
@@ -66,7 +66,7 @@
                             <div class="campo">
                                 <label>ID Cliente <span class="requerido">*</span></label>
                                 <input type="text" name="ClienteId" id="clienteId" maxlength="5" placeholder="Ej: C0001" required>
-                                <small>Máximo 5 caracteres</small>
+                                <small id="smallId">Máximo 5 caracteres</small>
                             </div>
                             <div class="campo">
                                 <label>Nombre del Negocio <span class="requerido">*</span></label>
@@ -125,7 +125,7 @@
 
                     <div class="botones-modal">
                         <button type="button" class="btn-cancelar" onclick="cerrarFormulario()">Cancelar</button>
-                        <button type="submit" class="btn-guardar">Guardar Cliente</button>
+                        <button type="submit" class="btn-guardar" id="btnGuardar">Guardar Cliente</button>
                     </div>
 
                 </form>
@@ -148,7 +148,6 @@
         cargarClientes();
     });
 
-    // ── CARGAR CLIENTES ──
     function cargarClientes() {
         fetch('../../php/obtener_clientes.php')
             .then(r => r.json())
@@ -163,7 +162,6 @@
             .catch(err => console.error("Error fetch:", err));
     }
 
-    // ── LLENAR TABLA ──
     function llenarTabla(clientes) {
         const tbody = document.getElementById('cuerpoTabla');
         if (clientes.length === 0) {
@@ -180,40 +178,32 @@
                     <td>${c.Telefono || '—'}</td>
                     <td>${c.Ciudad || '—'}</td>
                     <td class="acciones">
-                        <button class="editar" onclick="verCliente('${c.ClienteId}')">Ver</button>
+                        <button class="editar" onclick="mostrarFormularioEditar('${c.ClienteId}')">Editar</button>
                     </td>
                 </tr>`;
         });
         tbody.innerHTML = filas;
     }
 
-    // ── FILTRAR ──
     function filtrarClientes() {
         const texto = document.getElementById('inputBusqueda').value.toLowerCase();
-        const filtrados = listaClientesGlobal.filter(c =>
+        llenarTabla(listaClientesGlobal.filter(c =>
             (c.Negocio || '').toLowerCase().includes(texto) ||
             (c.NombreCliente || '').toLowerCase().includes(texto)
-        );
-        llenarTabla(filtrados);
+        ));
     }
 
-    // ── MOSTRAR / CERRAR MODAL ──
-    function mostrarFormulario() {
-        document.getElementById('modalTitulo').textContent = 'Nuevo Cliente';
+    function mostrarFormularioNuevo() {
         document.getElementById('formCliente').reset();
+        document.getElementById('modoEdicion').value = 'nuevo';
+        document.getElementById('modalTitulo').textContent = 'Nuevo Cliente';
+        document.getElementById('btnGuardar').textContent = 'Guardar Cliente';
         document.getElementById('clienteId').removeAttribute('readonly');
+        document.getElementById('smallId').style.display = 'block';
         document.getElementById('modalOverlay').classList.add('activo');
     }
 
-    function cerrarFormulario(event) {
-        // Cerrar solo si se hace clic en el fondo oscuro, o se llama directo
-        if (!event || event.target === document.getElementById('modalOverlay')) {
-            document.getElementById('modalOverlay').classList.remove('activo');
-        }
-    }
-
-    // ── VER DETALLE (solo lectura) ──
-    function verCliente(id) {
+    function mostrarFormularioEditar(id) {
         const c = listaClientesGlobal.find(x => x.ClienteId === id);
         if (!c) return;
 
@@ -231,34 +221,41 @@
         form.querySelector('[name="Ciudad"]').value          = c.Ciudad || '';
         form.querySelector('[name="CodigoPostal"]').value    = c.CodigoPostal || '';
 
-        document.getElementById('modalTitulo').textContent = 'Detalle del Cliente';
+        document.getElementById('modoEdicion').value = 'editar';
+        document.getElementById('modalTitulo').textContent = 'Editar Cliente';
+        document.getElementById('btnGuardar').textContent = 'Actualizar Cliente';
         document.getElementById('clienteId').setAttribute('readonly', true);
+        document.getElementById('smallId').style.display = 'none';
         document.getElementById('modalOverlay').classList.add('activo');
     }
 
-    // ── SUBMIT FORMULARIO ──
+    function cerrarFormulario(event) {
+        if (!event || event.target === document.getElementById('modalOverlay')) {
+            document.getElementById('modalOverlay').classList.remove('activo');
+        }
+    }
+
     document.getElementById('formCliente').addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const formData = Object.fromEntries(new FormData(e.target));
+        const modo = formData.modoEdicion;
 
-        // Validar que el ID tenga máximo 5 caracteres
-        if (formData.ClienteId.trim().length === 0 || formData.ClienteId.trim().length > 5) {
+        if (modo === 'nuevo' && (formData.ClienteId.trim().length === 0 || formData.ClienteId.trim().length > 5)) {
             alert("El ID del cliente debe tener entre 1 y 5 caracteres.");
             return;
         }
 
+        const url = modo === 'editar' ? '../../php/actualizar_cliente.php' : '../../phpinsertar_cliente.php';
+
         try {
-            const res = await fetch('../../php/insertar_cliente.php', {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-
             const data = await res.json();
-
             if (data.status === 'ok') {
-                alert("Cliente registrado correctamente.");
+                alert(modo === 'editar' ? "Cliente actualizado correctamente." : "Cliente registrado correctamente.");
                 cerrarFormulario();
                 cargarClientes();
             } else {
@@ -273,7 +270,7 @@
     function cerrarSesion() {
         if (confirm("¿Deseas cerrar sesión?")) {
             sessionStorage.clear();
-            window.location.href = "../../index.html";
+            window.location.href = "../index.html";
         }
     }
 </script>

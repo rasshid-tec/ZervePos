@@ -292,3 +292,19 @@ footer {
 .btn-guardar:hover {
     background: linear-gradient(135deg, #0f2027, #203a43);
 }
+
+/* ── BOTÓN ELIMINAR EN MODAL ── */
+.btn-eliminar-modal {
+    padding: 10px 20px;
+    border: none;
+    background: #e74c3c;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.btn-eliminar-modal:hover {
+    background: #c0392b;
+}
