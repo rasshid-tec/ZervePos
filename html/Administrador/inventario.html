@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Inventario</title>
-    <link rel="stylesheet" href="/css/productos.css">
+    <link rel="stylesheet" href="../../css/productos.css">
 </head>
 
 <body>
@@ -14,17 +14,14 @@
 <div class="contenedor">
     <aside class="menu">
         <ul>
-            <li><a href="#" onclick="location.href='inicioInventario.html'">Inicio</a></li>
-            <li><a href="productos.html">Productos</a></li>
-            <li><a href="#">Entradas</a></li>
-            <li><a href="#">Salidas</a></li>
+            <li><a href="inicioAdmin.html">Inicio</a></li>
             <div class="productos">
                 <li><a href="#">Inventario</a></li>
             </div>
-            <li><a href="#">Proveedores</a></li>
-            <li><a href="#">Reportes</a></li>
-            <li><a href="#" onclick="location.href='crearUsuario.html'">Crear Usuario</a></li>
-            <li><a href="#">Cerrar Sesión</a></li>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Cliente</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
@@ -59,7 +56,7 @@
 
     function cargarSucursales() {
         fetch('obtener_sucursales.php')
-            .then(respuesta => respuesta.json())
+            .then(r => r.json())
             .then(resultado => {
                 if (resultado.status === 'ok') {
                     const select = document.getElementById('selectSucursal');
@@ -78,16 +75,14 @@
 
     function cargarInventario() {
         const sucursalId = document.getElementById('selectSucursal').value;
-
         if (!sucursalId) {
             document.getElementById('cuerpoTabla').innerHTML =
                 '<tr><td colspan="4" style="text-align:center;">Selecciona una sucursal para ver el inventario.</td></tr>';
             listaInventarioGlobal = [];
             return;
         }
-
         fetch(`obtener_inventario.php?sucursalId=${sucursalId}`)
-            .then(respuesta => respuesta.json())
+            .then(r => r.json())
             .then(resultado => {
                 if (resultado.status === 'ok') {
                     listaInventarioGlobal = resultado.data;
@@ -102,41 +97,39 @@
 
     function llenarTabla(inventario) {
         const tbody = document.getElementById('cuerpoTabla');
-        let filas = '';
-
         if (inventario.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No se encontraron productos</td></tr>';
             return;
         }
-
+        let filas = '';
         inventario.forEach(item => {
             let stockSucursal = parseInt(item.Inventario);
             let stockGeneral  = parseInt(item.UnidadesEnStock);
-
             let estiloSucursal = (stockSucursal <= 7) ? 'color: red; font-weight: bold;' : '';
             let estiloGeneral  = (stockGeneral  <= 7) ? 'color: red; font-weight: bold;' : '';
-
             filas += `
                 <tr>
                     <td>${item.ProductoId}</td>
                     <td>${item.NombreProducto}</td>
                     <td style="${estiloSucursal}">${stockSucursal}</td>
                     <td style="${estiloGeneral}">${stockGeneral}</td>
-                </tr>
-            `;
+                </tr>`;
         });
-
         tbody.innerHTML = filas;
     }
 
     function filtrarInventario() {
-        const textoBusqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+        llenarTabla(listaInventarioGlobal.filter(item =>
+            item.NombreProducto.toLowerCase().includes(texto)
+        ));
+    }
 
-        const filtrados = listaInventarioGlobal.filter(item =>
-            item.NombreProducto.toLowerCase().includes(textoBusqueda)
-        );
-
-        llenarTabla(filtrados);
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
     }
 </script>
 </body>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - ZervePos</title>
+    <link rel="stylesheet" href="../../css/Dueño/usuarios.css">
+</head>
+<body>
+
+<header>
+    <h1>Gestión de Usuarios</h1>
+</header>
+
+<div class="contenedor">
+
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioDueno.html">Inicio</a></li>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <div class="usuarios-activo">
+                <li><a href="#">Usuarios</a></li>
+            </div>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+
+        <!-- BARRA SUPERIOR -->
+        <div class="barra-superior">
+            <input type="text" id="inputBusqueda" placeholder="Buscar por nombre o usuario..." onkeyup="filtrarUsuarios()">
+            <button class="btn-agregar" onclick="mostrarFormulario()">+ Nuevo Usuario</button>
+        </div>
+
+        <!-- TABLA -->
+        <table class="tabla-usuarios">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre Completo</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Teléfono</th>
+                    <th>Ciudad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <tr><td colspan="7" style="text-align:center;">Cargando usuarios...</td></tr>
+            </tbody>
+        </table>
+
+        <!-- MODAL -->
+        <div class="modal-overlay" id="modalOverlay" onclick="cerrarFormulario(event)">
+            <div class="modal">
+                <h2 id="modalTitulo">Nuevo Usuario</h2>
+
+                <form id="formUsuario">
+
+                    <div class="seccion-form">
+                        <h3>Datos del Empleado</h3>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Nombre <span class="requerido">*</span></label>
+                                <input type="text" name="nombre" placeholder="Nombre" required>
+                            </div>
+                            <div class="campo">
+                                <label>Apellidos <span class="requerido">*</span></label>
+                                <input type="text" name="apellidos" placeholder="Apellidos" required>
+                            </div>
+                        </div>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Fecha de Nacimiento <span class="requerido">*</span></label>
+                                <input type="date" name="fechaNacimiento" required>
+                            </div>
+                            <div class="campo">
+                                <label>Teléfono</label>
+                                <input type="text" name="telefono" placeholder="10 dígitos">
+                            </div>
+                        </div>
+                        <div class="fila">
+                            <div class="campo campo-ancho">
+                                <label>Domicilio</label>
+                                <input type="text" name="domicilio" placeholder="Calle y número">
+                            </div>
+                        </div>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Ciudad</label>
+                                <input type="text" name="ciudad" placeholder="Ciudad">
+                            </div>
+                            <div class="campo">
+                                <label>Código Postal</label>
+                                <input type="number" name="codigoPostal" placeholder="CP">
+                            </div>
+                        </div>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Rol <span class="requerido">*</span></label>
+                                <select name="rol" required>
+                                    <option value="">-- Selecciona un rol --</option>
+                                    <option value="Administrador">Administrador</option>
+                                    <option value="Dueño">Dueño</option>
+                                    <option value="Cajero">Cajero</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="seccion-form">
+                        <h3>Datos de Acceso</h3>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Usuario <span class="requerido">*</span></label>
+                                <input type="text" name="usuario" placeholder="Nombre de usuario" required>
+                            </div>
+                            <div class="campo">
+                                <label>Contraseña <span class="requerido">*</span></label>
+                                <input type="password" name="contrasena" placeholder="Contraseña" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="botones-modal">
+                        <button type="button" class="btn-cancelar" onclick="cerrarFormulario()">Cancelar</button>
+                        <button type="submit" class="btn-guardar">Crear Usuario</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<footer>
+    <p>Sistema de Inventario © 2026 &nbsp;|&nbsp; Rol: <span id="rolFooter">—</span></p>
+</footer>
+
+<script>
+    let listaUsuariosGlobal = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const rol = sessionStorage.getItem("rolUsuario");
+        document.getElementById("rolFooter").textContent = rol || "—";
+        cargarUsuarios();
+    });
+
+    // ── CARGAR USUARIOS ──
+    function cargarUsuarios() {
+        fetch('../../php/obtener_usuarios.php')
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.status === 'ok') {
+                    listaUsuariosGlobal = resultado.data;
+                    llenarTabla(listaUsuariosGlobal);
+                } else {
+                    console.error("Error:", resultado.message);
+                }
+            })
+            .catch(err => console.error("Error fetch:", err));
+    }
+
+    // ── LLENAR TABLA ──
+    function llenarTabla(usuarios) {
+        const tbody = document.getElementById('cuerpoTabla');
+        if (usuarios.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No se encontraron usuarios</td></tr>';
+            return;
+        }
+        let filas = '';
+        let contador = 1;
+        usuarios.forEach(u => {
+            const badgeClass = u.Rol === 'Administrador' ? 'badge-admin' :
+                               u.Rol === 'Dueño'         ? 'badge-dueno' : 'badge-cajero';
+            filas += `
+                <tr>
+                    <td>${contador}</td>
+                    <td>${u.Nombre} ${u.Apellidos}</td>
+                    <td><span class="tag-usuario">${u.NombreUsuario}</span></td>
+                    <td><span class="badge ${badgeClass}">${u.Rol}</span></td>
+                    <td>${u.Telefono || '—'}</td>
+                    <td>${u.Ciudad || '—'}</td>
+                    <td class="acciones">
+                        <button class="btn-eliminar" onclick="eliminarUsuario(${u.UsuariosId}, '${u.NombreUsuario}')">Eliminar</button>
+                    </td>
+                </tr>`;
+            contador++;
+        });
+        tbody.innerHTML = filas;
+    }
+
+    // ── FILTRAR ──
+    function filtrarUsuarios() {
+        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+        llenarTabla(listaUsuariosGlobal.filter(u =>
+            (u.Nombre + ' ' + u.Apellidos).toLowerCase().includes(texto) ||
+            (u.NombreUsuario || '').toLowerCase().includes(texto)
+        ));
+    }
+
+    // ── MOSTRAR / CERRAR MODAL ──
+    function mostrarFormulario() {
+        document.getElementById('modalTitulo').textContent = 'Nuevo Usuario';
+        document.getElementById('formUsuario').reset();
+        document.getElementById('modalOverlay').classList.add('activo');
+    }
+
+    function cerrarFormulario(event) {
+        if (!event || event.target === document.getElementById('modalOverlay')) {
+            document.getElementById('modalOverlay').classList.remove('activo');
+        }
+    }
+
+    // ── CREAR USUARIO ──
+    document.getElementById('formUsuario').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = Object.fromEntries(new FormData(e.target));
+        try {
+            const res = await fetch('../../php/insertar_usuario.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Usuario creado correctamente (ID: " + data.empleadoId + ")");
+                cerrarFormulario();
+                cargarUsuarios();
+            } else {
+                alert("Error: " + (data.message || "No se pudo crear el usuario"));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión con el servidor.");
+        }
+    });
+
+    // ── ELIMINAR USUARIO ──
+    function eliminarUsuario(usuarioId, nombreUsuario) {
+        if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombreUsuario}"?\nEsta acción también eliminará su registro de empleado.`)) {
+            fetch('../../php/eliminar_usuario.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ UsuariosId: usuarioId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    alert("Usuario eliminado correctamente.");
+                    cargarUsuarios();
+                } else {
+                    alert("Error al eliminar: " + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error de conexión con el servidor.");
+            });
+        }
+    }
+
+    function cerrarSesion() {
+        if (confirm("¿Deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+
+</body>
+</html>

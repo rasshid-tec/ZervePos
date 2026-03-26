@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clientes - ZervePos</title>
-    <link rel="stylesheet" href="/css/clientes.css">
+    <link rel="stylesheet" href="../../css/clientes.css">
 </head>
 <body>
 
@@ -16,26 +16,24 @@
 
     <aside class="menu">
         <ul>
-            <li><a href="inicioCajero.html">Inicio</a></li>
-            <li><a href="puntoVenta.html">Ventas</a></li>
-            <li><a href="productos.html">Inventario</a></li>
+            <li><a href="inicioAdmin.html">Inicio</a></li>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="productos.html">Productos</a></li>
             <div class="clientes-activo">
-                <li><a href="#">Clientes</a></li>
+                <li><a href="#">Cliente</a></li>
             </div>
-            <li><a href="caja.html">Caja</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
             <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
     <main class="contenido">
 
-        <!-- ── BARRA SUPERIOR ── -->
         <div class="barra-superior">
             <input type="text" id="inputBusqueda" placeholder="Buscar cliente por nombre o negocio..." onkeyup="filtrarClientes()">
             <button class="btn-agregar" onclick="mostrarFormulario()">+ Nuevo Cliente</button>
         </div>
 
-        <!-- ── TABLA DE CLIENTES ── -->
         <table class="tabla-clientes">
             <thead>
                 <tr>
@@ -52,13 +50,10 @@
             </tbody>
         </table>
 
-        <!-- ── MODAL FORMULARIO ── -->
         <div class="modal-overlay" id="modalOverlay" onclick="cerrarFormulario(event)">
             <div class="modal">
                 <h2 id="modalTitulo">Nuevo Cliente</h2>
-
                 <form id="formCliente">
-
                     <div class="seccion-form">
                         <h3>Datos del Negocio</h3>
                         <div class="fila">
@@ -126,7 +121,6 @@
                         <button type="button" class="btn-cancelar" onclick="cerrarFormulario()">Cancelar</button>
                         <button type="submit" class="btn-guardar">Guardar Cliente</button>
                     </div>
-
                 </form>
             </div>
         </div>
@@ -147,7 +141,6 @@
         cargarClientes();
     });
 
-    // ── CARGAR CLIENTES ──
     function cargarClientes() {
         fetch('../../php/obtener_clientes.php')
             .then(r => r.json())
@@ -162,7 +155,6 @@
             .catch(err => console.error("Error fetch:", err));
     }
 
-    // ── LLENAR TABLA ──
     function llenarTabla(clientes) {
         const tbody = document.getElementById('cuerpoTabla');
         if (clientes.length === 0) {
@@ -186,17 +178,14 @@
         tbody.innerHTML = filas;
     }
 
-    // ── FILTRAR ──
     function filtrarClientes() {
         const texto = document.getElementById('inputBusqueda').value.toLowerCase();
-        const filtrados = listaClientesGlobal.filter(c =>
+        llenarTabla(listaClientesGlobal.filter(c =>
             (c.Negocio || '').toLowerCase().includes(texto) ||
             (c.NombreCliente || '').toLowerCase().includes(texto)
-        );
-        llenarTabla(filtrados);
+        ));
     }
 
-    // ── MOSTRAR / CERRAR MODAL ──
     function mostrarFormulario() {
         document.getElementById('modalTitulo').textContent = 'Nuevo Cliente';
         document.getElementById('formCliente').reset();
@@ -205,57 +194,45 @@
     }
 
     function cerrarFormulario(event) {
-        // Cerrar solo si se hace clic en el fondo oscuro, o se llama directo
         if (!event || event.target === document.getElementById('modalOverlay')) {
             document.getElementById('modalOverlay').classList.remove('activo');
         }
     }
 
-    // ── VER DETALLE (solo lectura) ──
     function verCliente(id) {
         const c = listaClientesGlobal.find(x => x.ClienteId === id);
         if (!c) return;
-
         const form = document.getElementById('formCliente');
         form.reset();
-
-        form.querySelector('[name="ClienteId"]').value      = c.ClienteId;
-        form.querySelector('[name="Negocio"]').value         = c.Negocio || '';
-        form.querySelector('[name="NombreCliente"]').value   = c.NombreCliente || '';
-        form.querySelector('[name="TituloContacto"]').value  = c.TituloContacto || '';
-        form.querySelector('[name="Telefono"]').value        = c.Telefono || '';
-        form.querySelector('[name="Correo"]').value          = c.Correo || '';
-        form.querySelector('[name="Direccion"]').value       = c.Direccion || '';
-        form.querySelector('[name="Colonia"]').value         = c.Colonia || '';
-        form.querySelector('[name="Ciudad"]').value          = c.Ciudad || '';
-        form.querySelector('[name="CodigoPostal"]').value    = c.CodigoPostal || '';
-
+        form.querySelector('[name="ClienteId"]').value     = c.ClienteId;
+        form.querySelector('[name="Negocio"]').value        = c.Negocio || '';
+        form.querySelector('[name="NombreCliente"]').value  = c.NombreCliente || '';
+        form.querySelector('[name="TituloContacto"]').value = c.TituloContacto || '';
+        form.querySelector('[name="Telefono"]').value       = c.Telefono || '';
+        form.querySelector('[name="Correo"]').value         = c.Correo || '';
+        form.querySelector('[name="Direccion"]').value      = c.Direccion || '';
+        form.querySelector('[name="Colonia"]').value        = c.Colonia || '';
+        form.querySelector('[name="Ciudad"]').value         = c.Ciudad || '';
+        form.querySelector('[name="CodigoPostal"]').value   = c.CodigoPostal || '';
         document.getElementById('modalTitulo').textContent = 'Detalle del Cliente';
         document.getElementById('clienteId').setAttribute('readonly', true);
         document.getElementById('modalOverlay').classList.add('activo');
     }
 
-    // ── SUBMIT FORMULARIO ──
     document.getElementById('formCliente').addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const formData = Object.fromEntries(new FormData(e.target));
-
-        // Validar que el ID tenga máximo 5 caracteres
         if (formData.ClienteId.trim().length === 0 || formData.ClienteId.trim().length > 5) {
             alert("El ID del cliente debe tener entre 1 y 5 caracteres.");
             return;
         }
-
         try {
-            const res = await fetch('insertar_cliente.php', {
+            const res = await fetch('../../php/insertar_cliente.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-
             const data = await res.json();
-
             if (data.status === 'ok') {
                 alert("Cliente registrado correctamente.");
                 cerrarFormulario();

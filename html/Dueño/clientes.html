@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clientes - ZervePos</title>
-    <link rel="stylesheet" href="/css/clientes.css">
+    <link rel="stylesheet" href="../../css/clientes.css">
 </head>
 <body>
 
@@ -16,11 +16,13 @@
 
     <aside class="menu">
         <ul>
-            <li><a href="inicioCajero.html">Inicio</a></li>
-            <li><a href="puntoVenta.html">Ventas</a></li>
-            <li><a href="productos.html">Inventario</a></li>
-            <div class="clientes-activo">
-                <li><a href="#">Clientes</a></li>
+           <li><a href="productos.html">Productos</a></li>
+            <li><a href="#">Clientes</a></li>
+            <li><a href="inventario.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+               
             </div>
             <li><a href="caja.html">Caja</a></li>
             <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
@@ -149,7 +151,7 @@
 
     // ── CARGAR CLIENTES ──
     function cargarClientes() {
-        fetch('obtener_clientes.php')
+        fetch('../../php/obtener_clientes.php')
             .then(r => r.json())
             .then(resultado => {
                 if (resultado.status === 'ok') {
@@ -248,7 +250,7 @@
         }
 
         try {
-            const res = await fetch('insertar_cliente.php', {
+            const res = await fetch('../../php/insertar_cliente.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
