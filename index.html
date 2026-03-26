@@ -61,9 +61,9 @@ async function iniciarSesion() {
             
             // Redirigir a inicio.html
            switch (data.rol) {
-    case "Administrador": window.location.href = "/html/inicioAdmin.html"; break;
-    case "Dueño":         window.location.href = "/html/inicioDueno.html"; break;
-    case "Cajero":        window.location.href = "/html/inicioCajero.html"; break;
+    case "Administrador": window.location.href = "/html/Administrador/inicioAdmin.html"; break;
+    case "Dueño":         window.location.href = "/html/Dueño/inicioDueno.html"; break;
+    case "Cajero":        window.location.href = "/html/Vendedor/inicioVendedor.html"; break;
     default: alert("Rol desconocido: " + data.rol);
 }
         } else {
