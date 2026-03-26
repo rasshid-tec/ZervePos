@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistema de Inventario - Cajero</title>
-    <link rel="stylesheet" href="  /css/inicioCajero.css">
+    <link rel="stylesheet" href="/css/inicioCajero.css">
 </head>
 
 <body>
@@ -18,20 +18,13 @@
     <!-- ── MENÚ LATERAL ── -->
     <aside class="menu">
         <ul>
-            <!-- Inicio activo -->
             <div class="inicio">
-                <li><a href="inicio_cajero.html"><span class="icono"></span> Inicio</a></li>
+                <li><a href="inicioCajero.html"><span class="icono"></span> Inicio</a></li>
             </div>
-
-            
-
             <li><a href="puntoVenta.html"><span class="icono"></span>Ventas</a></li>
             <li><a href="productos.html"><span class="icono"></span>Inventario</a></li>
             <li><a href="clientes.html"><span class="icono"></span>Clientes</a></li>
             <li><a href="caja.html"><span class="icono"></span>Caja</a></li>
-
-            
-
             <li><a href="#" onclick="cerrarSesion()"><span class="icono"></span> Cerrar Sesión</a></li>
         </ul>
     </aside>
@@ -44,25 +37,25 @@
         <!-- TARJETAS PRINCIPALES -->
         <div class="tarjetas">
 
-            <div class="tarjeta entradas" onclick="location.href='entradas.html'">
+            <div class="tarjeta entradas" onclick="location.href='puntoVenta.html'">
                 <div class="icono-tarjeta">📥</div>
                 <h3>Ventas</h3>
                 <p>Registrar ventas de clientes.</p>
             </div>
 
-            <div class="tarjeta salidas" onclick="location.href='salidas.html'">
+            <div class="tarjeta salidas" onclick="location.href='productos.html'">
                 <div class="icono-tarjeta">📦</div>
                 <h3>Inventario</h3>
                 <p>Consultar el inventario de productos.</p>
             </div>
 
-            <div class="tarjeta productos" onclick="location.href='productos.html'">
+            <div class="tarjeta productos" onclick="location.href='clientes.html'">
                 <div class="icono-tarjeta">👥</div>
                 <h3>Clientes</h3>
                 <p>Consultar o registrar clientes.</p>
             </div>
 
-            <div class="tarjeta reportes" onclick="location.href='reportes.html'">
+            <div class="tarjeta reportes" onclick="location.href='caja.html'">
                 <div class="icono-tarjeta">📊</div>
                 <h3>Caja</h3>
                 <p>Cerrar caja y consultar el corte.</p>
@@ -110,21 +103,14 @@
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const usuario = sessionStorage.getItem("usuarioLogueado");
-        const rol     = sessionStorage.getItem("rolUsuario");
 
-       
-
-        // Mostrar nombre y rol
         document.getElementById("mensajeBienvenida").textContent  = `Bienvenido, ${usuario}`;
         document.getElementById("subtituloBienvenida").textContent = `Panel del Cajero`;
 
-        // ── Aquí puedes conectar tu API/backend para cargar los contadores reales ──
-        // Por ahora mostramos valores de demostración
         cargarResumenDia();
     });
 
     function cargarResumenDia() {
-        // Reemplaza estos valores con una llamada fetch() a tu backend cuando lo tengas listo
         document.getElementById("statEntradas").textContent  = "0";
         document.getElementById("statSalidas").textContent   = "0";
         document.getElementById("statProductos").textContent = "0";
