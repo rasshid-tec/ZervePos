@@ -14,12 +14,10 @@
 <div class="contenedor">
     <aside class="menu">
         <ul>
-            <li><a href="#" onclick="location.href='inicio.html'">Inicio</a></li>
-            <div class="productos">
-                <li><a href="#">Productos</a></li> 
+           <div class="inicio">
+                <li><a href="inicioDueno.html">Inicio</a></li>
             </div>
-            <li><a href="#">Entradas</a></li>
-           <li><a href="productos.html">Productos</a></li>
+            <li><a href="productos.html">Productos</a></li>
             <li><a href="clientes.html">Clientes</a></li>
             <li><a href="inventario.html">Inventario</a></li>
             <li><a href="reportes.html">Reportes</a></li>
@@ -149,6 +147,13 @@
                     alert("Error al eliminar: " + data.message);
                 }
             });
+        }
+    }
+
+     function cerrarSesion() {
+        if (confirm("¿Deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../../index.html";
         }
     }
 </script>
