@@ -2,123 +2,98 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Inventario - Cajero</title>
-    <link rel="stylesheet" href="/css/inicioCajero.css">
+    <title>Sistema de Inventario - Inicio</title>
+    <!-- Ruta al CSS -->
+    <link rel="stylesheet" href="../../css/Vendedor/inicioCajero.css">
 </head>
 
 <body>
 
 <header>
-    <div class="icono-header">🧾</div>
+    <!-- Le pusimos un ID para cambiar el texto desde JavaScript -->
     <h1 id="mensajeBienvenida">Cargando...</h1>
 </header>
 
 <div class="contenedor">
 
-    <!-- ── MENÚ LATERAL ── -->
     <aside class="menu">
         <ul>
             <div class="inicio">
-                <li><a href="inicioCajero.html"><span class="icono"></span> Inicio</a></li>
+                <li><a href="inicio.html">Inicio</a></li>
             </div>
-            <li><a href="puntoVenta.html"><span class="icono"></span>Ventas</a></li>
-            <li><a href="productos.html"><span class="icono"></span>Inventario</a></li>
-            <li><a href="clientes.html"><span class="icono"></span>Clientes</a></li>
-            <li><a href="caja.html"><span class="icono"></span>Caja</a></li>
-            <li><a href="#" onclick="cerrarSesion()"><span class="icono"></span> Cerrar Sesión</a></li>
+            
+            <!-- Cambiamos los onclick por href normales para mantener la estructura -->
+            <li><a href="productos.html">Inventario</a></li>
+            <li><a href="inventario.html">Ventas</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li><a href="reportes.html">Caja</a></li>
+            <!-- Botón de cerrar sesión configurado con la nueva función -->
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
         </ul>
     </aside>
 
-    <!-- ── CONTENIDO ── -->
     <main class="contenido">
-        <h2 id="subtituloBienvenida">Panel del Cajero</h2>
+        <h2 id="subtituloBienvenida">Bienvenido</h2>
         <p>Selecciona una opción del menú o una de las tarjetas para comenzar a trabajar con el sistema.</p>
 
-        <!-- TARJETAS PRINCIPALES -->
         <div class="tarjetas">
-
-            <div class="tarjeta entradas" onclick="location.href='puntoVenta.html'">
-                <div class="icono-tarjeta">📥</div>
-                <h3>Ventas</h3>
+            <div class="tarjeta"  style="cursor: pointer;">
+                <h3>📥Ventas</h3>
                 <p>Registrar ventas de clientes.</p>
             </div>
 
-            <div class="tarjeta salidas" onclick="location.href='productos.html'">
-                <div class="icono-tarjeta">📦</div>
-                <h3>Inventario</h3>
+            <div class="tarjeta" onclick="location.href='productos.html'" style="cursor: pointer;">
+                <h3>📦Inventario</h3>
                 <p>Consultar el inventario de productos.</p>
             </div>
 
-            <div class="tarjeta productos" onclick="location.href='clientes.html'">
-                <div class="icono-tarjeta">👥</div>
-                <h3>Clientes</h3>
+            <div class="tarjeta" style="cursor: pointer;">
+                <h3>👥Clientes</h3>
                 <p>Consultar o registrar clientes.</p>
             </div>
 
-            <div class="tarjeta reportes" onclick="location.href='caja.html'">
-                <div class="icono-tarjeta">📊</div>
-                <h3>Caja</h3>
+            <div class="tarjeta" style="cursor: pointer;">
+                <h3>📊Caja</h3>
                 <p>Cerrar caja y consultar el corte.</p>
             </div>
-
-        </div>
-
-        <!-- RESUMEN RÁPIDO DEL DÍA -->
-        <p class="resumen-titulo">Resumen del día</p>
-        <div class="resumen">
-
-            <div class="stat verde">
-                <div class="stat-icono">📥</div>
-                <div class="stat-info">
-                    <p>Ventas registradas</p>
-                    <strong id="statEntradas">—</strong>
-                </div>
-            </div>
-
-            <div class="stat naranja">
-                <div class="stat-icono">📤</div>
-                <div class="stat-info">
-                    <p>Salidas registradas</p>
-                    <strong id="statSalidas">—</strong>
-                </div>
-            </div>
-
-            <div class="stat azul">
-                <div class="stat-icono">📦</div>
-                <div class="stat-info">
-                    <p>Productos en catálogo</p>
-                    <strong id="statProductos">—</strong>
-                </div>
-            </div>
-
         </div>
     </main>
 
 </div>
 
 <footer>
-    <p>Sistema de Inventario © 2026 &nbsp;|&nbsp; Rol: Cajero</p>
+    <p>Sistema de Inventario © 2026</p>
 </footer>
 
 <script>
+    // Se ejecuta apenas carga la página
     document.addEventListener("DOMContentLoaded", () => {
+        // Recuperamos los datos que login.php nos mandó y guardamos en index.html
         const usuario = sessionStorage.getItem("usuarioLogueado");
+        const rol = sessionStorage.getItem("rolUsuario");
 
-        document.getElementById("mensajeBienvenida").textContent  = `Bienvenido, ${usuario}`;
-        document.getElementById("subtituloBienvenida").textContent = `Panel del Cajero`;
+        // VALIDACIÓN: Si no hay usuario, significa que no inició sesión. Lo regresamos al login.
+        if (!usuario) {
+            window.location.href = "../../index.html";
+            return;
+        }
 
-        cargarResumenDia();
+        // Mostrar el nombre y el rol en la cabecera
+        document.getElementById("mensajeBienvenida").textContent = `Bienvenido, ${usuario}`;
+        document.getElementById("subtituloBienvenida").textContent = `Panel de control (${rol})`;
+
+        // EXTRA (Opcional): Si el usuario NO es Administrador, ocultamos el botón de "Crear Usuario"
+        if (rol !== "Administrador") {
+            document.getElementById("menuCrearUsuario").style.display = "none";
+        }
     });
 
-    function cargarResumenDia() {
-        document.getElementById("statEntradas").textContent  = "0";
-        document.getElementById("statSalidas").textContent   = "0";
-        document.getElementById("statProductos").textContent = "0";
-    }
-
+    // Función para cerrar sesión de forma segura
     function cerrarSesion() {
-        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+        if(confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            // Borramos los datos guardados en el navegador
             sessionStorage.clear();
+            // Lo regresamos a la pantalla de login
             window.location.href = "../../index.html";
         }
     }
