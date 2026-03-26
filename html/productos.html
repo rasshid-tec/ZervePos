@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Productos</title>
-    <!-- Ruta al CSS -->
     <link rel="stylesheet" href="/css/productos.css">
 </head>
 
@@ -31,11 +30,10 @@
 
     <main class="contenido">
         <div class="barra-superior">
-    <!-- Se añadió id y onkeyup -->
-    <input type="text" id="inputBusqueda" placeholder="Buscar producto..." onkeyup="filtrarProductos()">
-    <button class="btn-agregar" onclick="window.location.href='agregar_producto.html'">Agregar Producto</button>
-</div>
-
+            <input type="text" id="inputBusqueda" placeholder="Buscar producto..." onkeyup="filtrarProductos()">
+            <!-- El botón Agregar se oculta si es Cajero -->
+            <button class="btn-agregar" id="btnAgregar" onclick="window.location.href='agregar_producto.html'">Agregar Producto</button>
+        </div>
 
         <table class="tabla-productos">
             <thead>
@@ -44,10 +42,10 @@
                     <th>Nombre</th>
                     <th>Precio</th>
                     <th>Stock</th>
-                    <th>Acciones</th>
+                    <!-- La columna Acciones se oculta si es Cajero -->
+                    <th id="thAcciones">Acciones</th>
                 </tr>
             </thead>
-            <!-- El cuerpo de la tabla se llena dinámicamente -->
             <tbody id="cuerpoTabla">
             </tbody>
         </table>
@@ -55,19 +53,27 @@
 </div>
 
 <script>
-       // Variable global para guardar la lista original
     let listaProductosGlobal = [];
 
-    document.addEventListener("DOMContentLoaded", cargarProductos);
+    // Leemos el rol guardado al iniciar sesión
+    const rolUsuario = sessionStorage.getItem("rolUsuario");
+    const esCajero = rolUsuario === "Cajero";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Si es Cajero, ocultamos el botón Agregar y el encabezado de Acciones
+        if (esCajero) {
+            document.getElementById("btnAgregar").style.display = "none";
+            document.getElementById("thAcciones").style.display = "none";
+        }
+        cargarProductos();
+    });
 
     function cargarProductos() {
         fetch('obtener_productos.php')
             .then(respuesta => respuesta.json())
             .then(resultado => {
                 if (resultado.status === 'ok') {
-                    // Guardamos los datos en la variable global
-                    listaProductosGlobal = resultado.data; 
-                    // Llenamos la tabla por primera vez
+                    listaProductosGlobal = resultado.data;
                     llenarTabla(listaProductosGlobal);
                 } else {
                     console.error("Error BD:", resultado.message);
@@ -76,57 +82,49 @@
             .catch(error => console.error("Error en fetch:", error));
     }
 
-            function llenarTabla(productos) {
+    function llenarTabla(productos) {
         const tbody = document.getElementById('cuerpoTabla');
-        let filas = '';
 
-        if(productos.length === 0){
+        if (productos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No se encontraron productos</td></tr>';
             return;
         }
 
-        // Variable para contar las filas visualmente (1, 2, 3...)
+        let filas = '';
         let contadorFila = 1;
 
         productos.forEach(producto => {
             let stock = parseInt(producto.UnidadesEnStock);
             let estiloStock = (stock <= 7) ? 'color: red; font-weight: bold;' : '';
 
+            // Si es Cajero, la celda de acciones va vacía y oculta
+            const celdaAcciones = esCajero
+                ? `<td style="display:none;"></td>`
+                : `<td class="acciones">
+                       <button class="editar" onclick="irAEditar(${producto.ProductoId}, '${encodeURIComponent(producto.NombreProducto)}', ${producto.PrecioUnitario}, ${producto.UnidadesEnStock})">Editar</button>
+                       <button class="eliminar" onclick="eliminarProducto(${producto.ProductoId})">Eliminar</button>
+                   </td>`;
+
             filas += `
                 <tr>
-                    <!-- Mostramos el contadorFila en lugar del ID real de la base de datos -->
                     <td>${contadorFila}</td>
                     <td>${producto.NombreProducto}</td>
                     <td>$${parseFloat(producto.PrecioUnitario).toFixed(2)}</td>
                     <td style="${estiloStock}">${stock}</td>
-                    <td class="acciones">
-                        <!-- Pero en los botones, seguimos usando el ID real para que SQL sepa qué borrar/editar -->
-                        <button class="editar" onclick="irAEditar(${producto.ProductoId}, '${encodeURIComponent(producto.NombreProducto)}', ${producto.PrecioUnitario}, ${producto.UnidadesEnStock})">Editar</button>
-                        <button class="eliminar" onclick="eliminarProducto(${producto.ProductoId})">Eliminar</button>
-                    </td>
+                    ${celdaAcciones}
                 </tr>
             `;
-            
-            contadorFila++; // Aumentamos el contador para la siguiente fila
+            contadorFila++;
         });
+
         tbody.innerHTML = filas;
     }
 
-
-
-    // --- NUEVA FUNCIÓN DE BÚSQUEDA ---
     function filtrarProductos() {
-        // Obtener el texto que el usuario está escribiendo y pasarlo a minúsculas
         const textoBusqueda = document.getElementById('inputBusqueda').value.toLowerCase();
-        
-        // Filtrar la lista original de productos
-        const productosFiltrados = listaProductosGlobal.filter(producto => {
-            // Convertimos el nombre del producto a minúsculas para comparar
-            const nombre = producto.NombreProducto.toLowerCase();
-            return nombre.includes(textoBusqueda);
-        });
-
-        // Volver a dibujar la tabla solo con los productos que coinciden
+        const productosFiltrados = listaProductosGlobal.filter(producto =>
+            producto.NombreProducto.toLowerCase().includes(textoBusqueda)
+        );
         llenarTabla(productosFiltrados);
     }
 
@@ -135,7 +133,7 @@
     }
 
     function eliminarProducto(id) {
-        if(confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+        if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
             fetch('eliminar_producto.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -143,9 +141,8 @@
             })
             .then(response => response.json())
             .then(data => {
-                if(data.status === 'ok') {
+                if (data.status === 'ok') {
                     alert("Producto eliminado exitosamente");
-                    // Limpiamos la barra de búsqueda y recargamos de la base de datos
                     document.getElementById('inputBusqueda').value = '';
                     cargarProductos();
                 } else {
@@ -154,7 +151,6 @@
             });
         }
     }
-
 </script>
 </body>
 </html>
