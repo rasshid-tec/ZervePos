@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Salidas - Inventario</title>
+    <title>Salidas - ZervePos</title>
     <link rel="stylesheet" href="../../css/Dueño/SalidasDueno.css">
 </head>
 
@@ -13,14 +13,13 @@
 </header>
 
 <div class="contenedor">
-
     <aside class="menu">
         <ul>
             <li><a href="inicioDueno.html">Inicio</a></li>
             <li><a href="productos.html">Productos</a></li>
             <li><a href="clientes.html">Clientes</a></li>
             <li class="inicio-activo"><a href="InicioInventarioDueno.html">Inventario</a></li>
-            <li><a href="#">Reportes</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
             <li><a href="usuarios.html">Usuarios</a></li>
             <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
         </ul>
@@ -28,22 +27,18 @@
 
     <main class="contenido">
         <h2>Registrar Salida</h2>
-        <p>Completa los datos para registrar una salida del inventario.</p>
-
         <div class="formulario-salida">
-
-            <!-- FILA 1: Sucursal Origen y Tipo -->
             <div class="fila">
                 <div class="campo">
                     <label>Sucursal Origen *</label>
                     <select id="selectSucursal">
-                        <option value="">-- Selecciona sucursal --</option>
+                        <option value="">-- Selecciona --</option>
                     </select>
                 </div>
                 <div class="campo">
                     <label>Tipo de Salida *</label>
                     <select id="selectTipo" onchange="toggleTipo()">
-                        <option value="">-- Selecciona tipo --</option>
+                        <option value="">-- Selecciona --</option>
                         <option value="VENTA">Venta</option>
                         <option value="MERMA">Merma</option>
                         <option value="TRANSFERENCIA">Transferencia</option>
@@ -52,85 +47,61 @@
                 </div>
             </div>
 
-            <!-- SUCURSAL DESTINO (solo transferencia) -->
             <div class="fila" id="filaSucursalDestino" style="display:none;">
                 <div class="campo">
                     <label>Sucursal Destino *</label>
                     <select id="selectSucursalDestino">
-                        <option value="">-- Selecciona sucursal destino --</option>
+                        <option value="">-- Selecciona destino --</option>
                     </select>
                 </div>
                 <div class="campo"></div>
             </div>
 
-            <!-- FILA 2: Motivo -->
             <div class="fila">
                 <div class="campo full">
                     <label>Motivo *</label>
-                    <input type="text" id="inputMotivo" placeholder="Describe el motivo de la salida..." maxlength="100">
+                    <input type="text" id="inputMotivo" placeholder="Descripción breve..." maxlength="100">
                 </div>
             </div>
 
-            <!-- BUSCADOR DE PRODUCTOS -->
             <div class="seccion-productos">
-                <h3>Productos</h3>
+                <h3>Buscar Productos</h3>
                 <div class="barra-busqueda">
-                    <input type="text" id="inputBusqueda" placeholder="🔍 Buscar producto por nombre..." onkeyup="filtrarProductos()">
+                    <input type="text" id="inputBusqueda" placeholder="Nombre del producto..." onkeyup="filtrarProductos()">
                 </div>
-                <div class="lista-productos" id="listaProductos">
-                    <p class="placeholder-texto">Escribe para buscar productos...</p>
-                </div>
+                <div class="lista-productos" id="listaProductos"></div>
             </div>
 
-            <!-- TABLA DE PRODUCTOS AGREGADOS -->
             <div class="seccion-tabla" id="seccionTabla" style="display:none;">
-                <h3>Productos a dar salida</h3>
-                <div class="scroll-tabla">
-                    <table class="tabla-agregados">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Quitar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cuerpoTablaAgregados"></tbody>
-                    </table>
-                </div>
+                <table class="tabla-agregados">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaAgregados"></tbody>
+                </table>
             </div>
 
-            <!-- BOTONES -->
             <div class="fila-boton">
-                <button class="btn-guardar" onclick="guardarSalida()">✅ Registrar Salida</button>
-                <button class="btn-cancelar" onclick="cancelarSalida()">✖ Cancelar</button>
+                <button class="btn-guardar" onclick="guardarSalida()">Registrar</button>
+                <button class="btn-cancelar" onclick="location.reload()">Limpiar</button>
             </div>
-
         </div>
     </main>
-
 </div>
 
-<!-- MODAL CONFIRMACIÓN TRANSFERENCIA -->
 <div class="modal-overlay" id="modalTransferencia" style="display:none;">
     <div class="modal">
-        <div class="modal-header">
-            <h3>🔄 Confirmar Transferencia</h3>
-            <button class="btn-cerrar-modal" onclick="cerrarModalTransferencia()">✖</button>
-        </div>
-        <div class="modal-body">
-            <p id="textoConfirmacion"></p>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-guardar" onclick="confirmarTransferencia()">✅ Confirmar</button>
-            <button class="btn-cancelar" onclick="cerrarModalTransferencia()">✖ Cancelar</button>
-        </div>
+        <h3>Confirmar Transferencia</h3>
+        <p id="textoConfirmacion"></p>
+        <button class="btn-guardar" onclick="confirmarTransferencia()">Confirmar</button>
+        <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
     </div>
 </div>
-
-<footer>
-    <p>Sistema de Inventario © 2026</p>
-</footer>
 
 <script>
     let todosLosProductos = [];
@@ -145,31 +116,24 @@
         cargarProductos();
     });
 
-    // ── TOGGLE TIPO ─────────────────────────────────────────────
     function toggleTipo() {
         const tipo = document.getElementById('selectTipo').value;
-        const filaDestino = document.getElementById('filaSucursalDestino');
-        filaDestino.style.display = tipo === 'TRANSFERENCIA' ? 'flex' : 'none';
-        if (tipo !== 'TRANSFERENCIA') {
-            document.getElementById('selectSucursalDestino').value = '';
-        }
+        document.getElementById('filaSucursalDestino').style.display = (tipo === 'TRANSFERENCIA') ? 'flex' : 'none';
     }
 
-    // ── CARGA DE DATOS ──────────────────────────────────────────
     function cargarSucursales() {
         fetch('../../php/obtener_sucursales.php')
             .then(r => r.json())
             .then(res => {
                 if (res.status !== 'ok') return;
-                const selOrigen  = document.getElementById('selectSucursal');
-                const selDestino = document.getElementById('selectSucursalDestino');
+                const selO = document.getElementById('selectSucursal');
+                const selD = document.getElementById('selectSucursalDestino');
                 res.data.forEach(s => {
-                    [selOrigen, selDestino].forEach(sel => {
-                        const opt = document.createElement('option');
-                        opt.value = s.SucursalId;
-                        opt.textContent = s.NombreSucursal;
-                        sel.appendChild(opt);
-                    });
+                    const opt = document.createElement('option');
+                    opt.value = s.SucursalId;
+                    opt.textContent = s.NombreSucursal;
+                    selO.appendChild(opt.cloneNode(true));
+                    selD.appendChild(opt);
                 });
             });
     }
@@ -177,140 +141,71 @@
     function cargarProductos() {
         fetch('../../php/obtener_productos.php')
             .then(r => r.json())
-            .then(res => {
-                if (res.status !== 'ok') return;
-                todosLosProductos = res.data;
-            });
+            .then(res => { if (res.status === 'ok') todosLosProductos = res.data; });
     }
 
-    // ── BUSCADOR ────────────────────────────────────────────────
     function filtrarProductos() {
-        const texto = document.getElementById('inputBusqueda').value.toLowerCase().trim();
+        const texto = document.getElementById('inputBusqueda').value.toUpperCase();
         const lista = document.getElementById('listaProductos');
-
-        if (texto === '') {
-            lista.innerHTML = '<p class="placeholder-texto">Escribe para buscar productos...</p>';
-            return;
-        }
-
-        const filtrados = todosLosProductos.filter(p =>
-            p.NombreProducto.toLowerCase().includes(texto)
-        );
-
-        if (filtrados.length === 0) {
-            lista.innerHTML = '<p class="placeholder-texto">No se encontraron productos.</p>';
-            return;
-        }
-
+        if (!texto) { lista.innerHTML = ''; return; }
+        
+        const filtrados = todosLosProductos.filter(p => p.NombreProducto.toUpperCase().includes(texto));
         lista.innerHTML = filtrados.map(p => `
             <div class="item-producto">
-                <span class="nombre-prod">${p.NombreProducto}</span>
-                <span class="precio-prod">$${parseFloat(p.PrecioUnitario).toFixed(2)}</span>
-                <div class="controles-agregar">
-                    <input type="number" class="input-cantidad-busqueda" id="cant_${p.ProductoId}" min="1" value="1">
-                    <button class="btn-agregar" onclick="agregarProducto(${p.ProductoId}, '${p.NombreProducto.replace(/'/g, "\\'")}')">+ Agregar</button>
-                </div>
+                <span>${p.NombreProducto}</span>
+                <button onclick="agregarProducto(${p.ProductoId}, '${p.NombreProducto}')">Agregar</button>
             </div>
         `).join('');
     }
 
-    // ── AGREGAR PRODUCTO ────────────────────────────────────────
     function agregarProducto(id, nombre) {
-        const inputCant = document.getElementById(`cant_${id}`);
-        const cantidad  = inputCant ? parseInt(inputCant.value) : 1;
-
-        if (cantidad < 1) {
-            alert('La cantidad debe ser mayor a 0.');
-            return;
-        }
-
-        const existente = productosAgregados.find(p => p.ProductoId === id);
-        if (existente) {
-            existente.Cantidad = parseInt(existente.Cantidad) + cantidad;
-            renderizarTabla();
-            return;
-        }
-
-        productosAgregados.push({ ProductoId: id, NombreProducto: nombre, Cantidad: cantidad });
-        document.getElementById('inputBusqueda').value = '';
-        document.getElementById('listaProductos').innerHTML = '<p class="placeholder-texto">Escribe para buscar productos...</p>';
+        const existe = productosAgregados.find(p => p.ProductoId === id);
+        if (existe) { existe.Cantidad++; } 
+        else { productosAgregados.push({ ProductoId: id, NombreProducto: nombre, Cantidad: 1 }); }
         renderizarTabla();
     }
 
-    // ── TABLA ───────────────────────────────────────────────────
     function renderizarTabla() {
         const tbody = document.getElementById('cuerpoTablaAgregados');
         document.getElementById('seccionTabla').style.display = productosAgregados.length ? 'block' : 'none';
-
         tbody.innerHTML = productosAgregados.map((p, i) => `
             <tr>
                 <td>${p.ProductoId}</td>
                 <td>${p.NombreProducto}</td>
-                <td><input type="number" class="input-tabla" min="1" value="${p.Cantidad}" onchange="actualizarCantidad(${i}, this.value)"></td>
-                <td><button class="btn-quitar" onclick="quitarProducto(${i})">✖</button></td>
+                <td><input type="number" value="${p.Cantidad}" onchange="productosAgregados[${i}].Cantidad = parseInt(this.value)"></td>
+                <td><button onclick="productosAgregados.splice(${i}, 1); renderizarTabla()">❌</button></td>
             </tr>
         `).join('');
     }
 
-    function actualizarCantidad(index, valor) {
-        productosAgregados[index].Cantidad = parseInt(valor);
-    }
-
-    function quitarProducto(index) {
-        productosAgregados.splice(index, 1);
-        renderizarTabla();
-    }
-
-    // ── GUARDAR SALIDA ──────────────────────────────────────────
     function guardarSalida() {
-        const sucursalId  = document.getElementById('selectSucursal').value;
-        const tipo        = document.getElementById('selectTipo').value;
-        const motivo      = document.getElementById('inputMotivo').value.trim();
+        const payload = {
+            sucursalId: document.getElementById('selectSucursal').value,
+            tipo: document.getElementById('selectTipo').value, // Esto envía "VENTA", "MERMA", etc.
+            motivo: document.getElementById('inputMotivo').value.trim(),
+            productos: productosAgregados
+        };
 
-        if (!sucursalId || !tipo || !motivo) {
-            alert('Por favor completa todos los campos obligatorios (*).');
-            return;
+        if (!payload.sucursalId || !payload.tipo || !payload.motivo || !payload.productos.length) {
+            alert("Completa todos los campos."); return;
         }
 
-        if (productosAgregados.length === 0) {
-            alert('Agrega al menos un producto a la salida.');
-            return;
-        }
-
-        if (tipo === 'TRANSFERENCIA') {
-            const sucursalDestino = document.getElementById('selectSucursalDestino').value;
-            if (!sucursalDestino) {
-                alert('Selecciona la sucursal destino para la transferencia.');
-                return;
+        if (payload.tipo === 'TRANSFERENCIA') {
+            payload.sucursalDestino = document.getElementById('selectSucursalDestino').value;
+            if (!payload.sucursalDestino || payload.sucursalDestino === payload.sucursalId) {
+                alert("Selecciona una sucursal destino diferente."); return;
             }
-            if (sucursalDestino === sucursalId) {
-                alert('La sucursal destino debe ser diferente a la sucursal origen.');
-                return;
-            }
-
-            // Mostrar modal de confirmación
-            const nombreOrigen  = document.getElementById('selectSucursal').options[document.getElementById('selectSucursal').selectedIndex].text;
-            const nombreDestino = document.getElementById('selectSucursalDestino').options[document.getElementById('selectSucursalDestino').selectedIndex].text;
-            document.getElementById('textoConfirmacion').innerHTML = `
-                ¿Confirmas la transferencia de <strong>${productosAgregados.length} producto(s)</strong><br>
-                de <strong>${nombreOrigen}</strong> → <strong>${nombreDestino}</strong>?
-            `;
-            payloadPendiente = { sucursalId, sucursalDestino, tipo, motivo, productos: productosAgregados };
+            payloadPendiente = payload;
+            document.getElementById('textoConfirmacion').innerText = `¿Confirmar transferencia?`;
             document.getElementById('modalTransferencia').style.display = 'flex';
-            return;
+        } else {
+            enviarSalida(payload);
         }
-
-        enviarSalida({ sucursalId, tipo, motivo, productos: productosAgregados });
     }
 
     function confirmarTransferencia() {
-        cerrarModalTransferencia();
-        enviarSalida(payloadPendiente);
-    }
-
-    function cerrarModalTransferencia() {
         document.getElementById('modalTransferencia').style.display = 'none';
-        payloadPendiente = null;
+        enviarSalida(payloadPendiente);
     }
 
     function enviarSalida(payload) {
@@ -319,37 +214,20 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-        .then(r => r.json())
-        .then(res => {
-            if (res.status === 'ok') {
-                alert('✅ Salida registrada correctamente.');
-                cancelarSalida();
-            } else {
-                alert('❌ Error: ' + res.message);
-            }
+        .then(async r => {
+            const text = await r.text();
+            try { return JSON.parse(text); } 
+            catch (e) { throw new Error("Error SQL: " + text); }
         })
-        .catch(err => alert('Error de conexión: ' + err));
+        .then(res => {
+            if (res.status === 'ok') { alert("✅ Guardado."); location.reload(); } 
+            else { alert("❌ " + res.message); }
+        })
+        .catch(err => alert(err.message));
     }
 
-    function cancelarSalida() {
-        productosAgregados = [];
-        renderizarTabla();
-        document.getElementById('selectSucursal').value        = '';
-        document.getElementById('selectTipo').value            = '';
-        document.getElementById('selectSucursalDestino').value = '';
-        document.getElementById('inputMotivo').value           = '';
-        document.getElementById('inputBusqueda').value         = '';
-        document.getElementById('filaSucursalDestino').style.display = 'none';
-        document.getElementById('listaProductos').innerHTML = '<p class="placeholder-texto">Escribe para buscar productos...</p>';
-    }
-
-    function cerrarSesion() {
-        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
-            sessionStorage.clear();
-            window.location.href = "../index.html";
-        }
-    }
+    function cerrarModal() { document.getElementById('modalTransferencia').style.display = 'none'; }
+    function cerrarSesion() { sessionStorage.clear(); window.location.href = "../index.html"; }
 </script>
-
 </body>
 </html>
