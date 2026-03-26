@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Inventario - Sucursales</title>
+    <link rel="stylesheet" href="/css/Dueño/InicioInventarioDueno.css">
+</head>
+
+<body>
+
+<header>
+    <h1 id="mensajeBienvenida">Cargando...</h1>
+</header>
+
+<div class="contenedor">
+
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioDueno.html">Inicio</a></li>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li><a href="InicioInventarioDueno.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li class="inicio-activo"><a href="sucursales.html">Sucursales</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <h2 >Gestión de Sucursales</h2>
+        <p>Selecciona una opción para administrar las sucursales del sistema.</p>
+
+        <div class="tarjetas">
+
+            <div class="tarjeta entradas" onclick="location.href='agregar_sucursal.html'">
+                <div class="icono">➕</div>
+                <h3>Agregar Sucursal</h3>
+                <p>Registrar una nueva sucursal en el sistema.</p>
+            </div>
+
+            <div class="tarjeta" onclick="location.href='editar_sucursal.html'">
+                <div class="icono">✏️</div>
+                <h3>Editar Sucursal</h3>
+                <p>Modificar los datos de una sucursal existente.</p>
+            </div>
+
+            <div class="tarjeta salidas" onclick="location.href='eliminar_sucursal.html'">
+                <div class="icono">🗑️</div>
+                <h3>Eliminar Sucursal</h3>
+                <p>Dar de baja una sucursal del sistema.</p>
+            </div>
+
+            <div class="tarjeta sucursales" onclick="location.href='consultar_sucursales.html'">
+                <div class="icono">🏪</div>
+                <h3>Consultar Sucursales</h3>
+                <p>Ver el listado y detalle de todas las sucursales.</p>
+            </div>
+
+            <div class="tarjeta" onclick="location.href='existencias_sucursales.html'">
+                <div class="icono">📦</div>
+                <h3>Existencias por Sucursal</h3>
+                <p>Consultar el inventario disponible en otras sucursales.</p>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<footer>
+    <p>Sistema de Inventario © 2026</p>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const usuario = sessionStorage.getItem("usuarioLogueado");
+        const rol     = sessionStorage.getItem("rolUsuario");
+
+        if (!usuario) {
+            window.location.href = "../index.html";
+            return;
+        }
+
+        document.getElementById("mensajeBienvenida").textContent = `Bienvenido, ${usuario}`;
+        document.getElementById("subtituloBienvenida").textContent = `Sucursales (${rol})`;
+    });
+
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+
+</body>
+</html>

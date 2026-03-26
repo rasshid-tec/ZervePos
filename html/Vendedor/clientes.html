@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - ZervePos</title>
+    <link rel="stylesheet" href="../../css/clientes.css">
+</head>
+<body>
+
+<header>
+    <h1>Gestión de Clientes</h1>
+</header>
+
+<div class="contenedor">
+
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioCajero.html">Inicio</a></li>
+            <div class="inicio">
+                <li><a href="inicioCajero.html">Inicio</a></li>
+            </div>
+            <li><a href="productos.html">Inventario</a></li>
+            <li><a href="ventas.html">Ventas</a></li>
+            <div class="clientes-activo">
+                <li><a href="#">Clientes</a></li>
+            </div>
+            <li><a href="caja.html">Caja</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+
+        <div class="barra-superior">
+            <input type="text" id="inputBusqueda" placeholder="Buscar cliente por nombre o negocio..." onkeyup="filtrarClientes()">
+            <button class="btn-agregar" onclick="mostrarFormularioNuevo()">+ Nuevo Cliente</button>
+        </div>
+
+        <table class="tabla-clientes">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Negocio</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Ciudad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <tr><td colspan="6" style="text-align:center;">Cargando clientes...</td></tr>
+            </tbody>
+        </table>
+
+        <!-- MODAL -->
+        <div class="modal-overlay" id="modalOverlay" onclick="cerrarFormulario(event)">
+            <div class="modal">
+                <h2 id="modalTitulo">Nuevo Cliente</h2>
+                <form id="formCliente">
+                    <input type="hidden" name="modoEdicion" id="modoEdicion" value="nuevo">
+
+                    <div class="seccion-form">
+                        <h3>Datos del Negocio</h3>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>ID Cliente <span class="requerido">*</span></label>
+                                <input type="text" name="ClienteId" id="clienteId" maxlength="5" placeholder="Ej: C0001" required>
+                                <small id="smallId">Máximo 5 caracteres</small>
+                            </div>
+                            <div class="campo">
+                                <label>Nombre del Negocio <span class="requerido">*</span></label>
+                                <input type="text" name="Negocio" placeholder="Nombre del negocio" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="seccion-form">
+                        <h3>Datos del Contacto</h3>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Nombre del Contacto</label>
+                                <input type="text" name="NombreCliente" placeholder="Nombre completo">
+                            </div>
+                            <div class="campo">
+                                <label>Título / Cargo</label>
+                                <input type="text" name="TituloContacto" placeholder="Ej: Gerente, Dueño">
+                            </div>
+                        </div>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Teléfono</label>
+                                <input type="text" name="Telefono" placeholder="10 dígitos">
+                            </div>
+                            <div class="campo">
+                                <label>Correo Electrónico</label>
+                                <input type="email" name="Correo" placeholder="correo@ejemplo.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="seccion-form">
+                        <h3>Dirección</h3>
+                        <div class="fila">
+                            <div class="campo campo-ancho">
+                                <label>Dirección</label>
+                                <input type="text" name="Direccion" placeholder="Calle, número exterior e interior">
+                            </div>
+                        </div>
+                        <div class="fila">
+                            <div class="campo">
+                                <label>Colonia</label>
+                                <input type="text" name="Colonia" placeholder="Colonia">
+                            </div>
+                            <div class="campo">
+                                <label>Ciudad</label>
+                                <input type="text" name="Ciudad" placeholder="Ciudad">
+                            </div>
+                            <div class="campo">
+                                <label>Código Postal</label>
+                                <input type="text" name="CodigoPostal" placeholder="CP" maxlength="10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="botones-modal">
+                        <button type="button" class="btn-cancelar" onclick="cerrarFormulario()">Cancelar</button>
+                        <button type="submit" class="btn-guardar" id="btnGuardar">Guardar Cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<footer>
+    <p>Sistema de Inventario © 2026 &nbsp;|&nbsp; Rol: <span id="rolFooter">—</span></p>
+</footer>
+
+<script>
+    let listaClientesGlobal = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("rolFooter").textContent = sessionStorage.getItem("rolUsuario") || "—";
+        cargarClientes();
+    });
+
+    function cargarClientes() {
+        fetch('../../php/obtener_clientes.php')
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.status === 'ok') {
+                    listaClientesGlobal = resultado.data;
+                    llenarTabla(listaClientesGlobal);
+                } else console.error("Error:", resultado.message);
+            })
+            .catch(err => console.error("Error fetch:", err));
+    }
+
+    function llenarTabla(clientes) {
+        const tbody = document.getElementById('cuerpoTabla');
+        if (clientes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No se encontraron clientes</td></tr>';
+            return;
+        }
+        tbody.innerHTML = clientes.map(c => `
+            <tr>
+                <td>${c.ClienteId}</td>
+                <td>${c.Negocio}</td>
+                <td>${c.NombreCliente || '—'}</td>
+                <td>${c.Telefono || '—'}</td>
+                <td>${c.Ciudad || '—'}</td>
+                <td class="acciones">
+                    <button class="editar" onclick="mostrarFormularioEditar('${c.ClienteId}')">Editar</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    function filtrarClientes() {
+        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+        llenarTabla(listaClientesGlobal.filter(c =>
+            (c.Negocio || '').toLowerCase().includes(texto) ||
+            (c.NombreCliente || '').toLowerCase().includes(texto)
+        ));
+    }
+
+    function mostrarFormularioNuevo() {
+        document.getElementById('formCliente').reset();
+        document.getElementById('modoEdicion').value = 'nuevo';
+        document.getElementById('modalTitulo').textContent = 'Nuevo Cliente';
+        document.getElementById('btnGuardar').textContent = 'Guardar Cliente';
+        document.getElementById('clienteId').removeAttribute('readonly');
+        document.getElementById('smallId').style.display = 'block';
+        document.getElementById('modalOverlay').classList.add('activo');
+    }
+
+    function mostrarFormularioEditar(id) {
+        const c = listaClientesGlobal.find(x => x.ClienteId === id);
+        if (!c) return;
+        const form = document.getElementById('formCliente');
+        form.reset();
+        form.querySelector('[name="ClienteId"]').value      = c.ClienteId;
+        form.querySelector('[name="Negocio"]').value         = c.Negocio || '';
+        form.querySelector('[name="NombreCliente"]').value   = c.NombreCliente || '';
+        form.querySelector('[name="TituloContacto"]').value  = c.TituloContacto || '';
+        form.querySelector('[name="Telefono"]').value        = c.Telefono || '';
+        form.querySelector('[name="Correo"]').value          = c.Correo || '';
+        form.querySelector('[name="Direccion"]').value       = c.Direccion || '';
+        form.querySelector('[name="Colonia"]').value         = c.Colonia || '';
+        form.querySelector('[name="Ciudad"]').value          = c.Ciudad || '';
+        form.querySelector('[name="CodigoPostal"]').value    = c.CodigoPostal || '';
+        document.getElementById('modoEdicion').value = 'editar';
+        document.getElementById('modalTitulo').textContent = 'Editar Cliente';
+        document.getElementById('btnGuardar').textContent = 'Actualizar Cliente';
+        document.getElementById('clienteId').setAttribute('readonly', true);
+        document.getElementById('smallId').style.display = 'none';
+        document.getElementById('modalOverlay').classList.add('activo');
+    }
+
+    function cerrarFormulario(event) {
+        if (!event || event.target === document.getElementById('modalOverlay'))
+            document.getElementById('modalOverlay').classList.remove('activo');
+    }
+
+    document.getElementById('formCliente').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = Object.fromEntries(new FormData(e.target));
+        const modo = formData.modoEdicion;
+        if (modo === 'nuevo' && (formData.ClienteId.trim().length === 0 || formData.ClienteId.trim().length > 5)) {
+            alert("El ID del cliente debe tener entre 1 y 5 caracteres.");
+            return;
+        }
+        try {
+            const res = await fetch(modo === 'editar' ? '../../php/actualizar_cliente.php' : '../../php/insertar_cliente.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                alert(modo === 'editar' ? "Cliente actualizado correctamente." : "Cliente registrado correctamente.");
+                cerrarFormulario();
+                cargarClientes();
+            } else alert("Error: " + data.message);
+        } catch (err) {
+            alert("Error de conexión con el servidor.");
+        }
+    });
+
+    function cerrarSesion() {
+        if (confirm("¿Deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+
+</body>
+</html>

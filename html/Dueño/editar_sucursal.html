@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Sucursal</title>
+    <link rel="stylesheet" href="/css/productos.css">
+    <style>
+        .formulario-edicion {
+            background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+            max-width: 400px; margin: 50px auto; font-family: sans-serif;
+        }
+        .formulario-edicion label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px;}
+        .formulario-edicion select,
+        .formulario-edicion input { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .botones-form { margin-top: 20px; display: flex; justify-content: space-between; }
+        .botones-form button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold;}
+        .btn-guardar { background: #4CAF50; color: white; }
+        .btn-cancelar { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Editar Sucursal</h1>
+    </header>
+
+    <div class="formulario-edicion">
+
+        <label>Selecciona la Sucursal a editar:</label>
+        <select id="selectSucursal" onchange="cargarDatosSucursal()">
+            <option value="">-- Selecciona una sucursal --</option>
+        </select>
+
+        <div id="camposEdicion" style="display:none;">
+            <input type="hidden" id="edit-id">
+
+            <label>Nombre de la Sucursal:</label>
+            <input type="text" id="edit-nombre">
+
+            <label>Dirección:</label>
+            <input type="text" id="edit-direccion">
+
+            <label>Ciudad:</label>
+            <input type="text" id="edit-ciudad">
+
+            <label>Teléfono:</label>
+            <input type="text" id="edit-telefono">
+
+            <div class="botones-form">
+                <button class="btn-cancelar" onclick="window.location.href='inicioSucursalesDueno.html'">Cancelar</button>
+                <button class="btn-guardar" onclick="guardarCambios()">Guardar Cambios</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let listaSucursales = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch('../../php/obtener_sucursales_detalle.php')
+                .then(r => r.json())
+                .then(resultado => {
+                    if (resultado.status === 'ok') {
+                        listaSucursales = resultado.data;
+                        const select = document.getElementById('selectSucursal');
+                        resultado.data.forEach(s => {
+                            const option = document.createElement('option');
+                            option.value = s.SucursalId;
+                            option.textContent = s.NombreSucursal;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.error("Error al cargar sucursales:", resultado.message);
+                    }
+                })
+                .catch(error => console.error("Error en fetch:", error));
+        });
+
+        function cargarDatosSucursal() {
+            const id = document.getElementById('selectSucursal').value;
+
+            if (!id) {
+                document.getElementById('camposEdicion').style.display = 'none';
+                return;
+            }
+
+            // Buscar la sucursal en la lista ya cargada
+            const sucursal = listaSucursales.find(s => s.SucursalId == id);
+
+            if (sucursal) {
+                document.getElementById('edit-id').value        = sucursal.SucursalId;
+                document.getElementById('edit-nombre').value    = sucursal.NombreSucursal;
+                document.getElementById('edit-direccion').value = sucursal.Direccion;
+                document.getElementById('edit-ciudad').value    = sucursal.Ciudad;
+                document.getElementById('edit-telefono').value  = sucursal.Telefono;
+                document.getElementById('camposEdicion').style.display = 'block';
+            }
+        }
+
+        function guardarCambios() {
+            const id        = document.getElementById('edit-id').value;
+            const nombre    = document.getElementById('edit-nombre').value;
+            const direccion = document.getElementById('edit-direccion').value;
+            const ciudad    = document.getElementById('edit-ciudad').value;
+            const telefono  = document.getElementById('edit-telefono').value;
+
+            if (!nombre || !direccion || !ciudad || !telefono) {
+                alert("Por favor completa todos los campos.");
+                return;
+            }
+
+            fetch('../../php/actualizar_sucursal.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    SucursalId:     parseInt(id),
+                    NombreSucursal: nombre,
+                    Direccion:      direccion,
+                    Ciudad:         ciudad,
+                    Telefono:       telefono
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    alert("Sucursal actualizada exitosamente");
+                    window.location.href = 'inicioSucursalesDueno.html';
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>

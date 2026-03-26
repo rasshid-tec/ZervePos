@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultar Sucursales</title>
+    <link rel="stylesheet" href="/css/productos.css">
+</head>
+
+<body>
+<header>
+    <h1>Consultar Sucursales</h1>
+</header>
+
+<div class="contenedor">
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioDueno.html">Inicio</a></li>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li><a href="InicioInventarioDueno.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li class="inicio-activo"><a href="sucursales.html">Sucursales</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <div class="barra-superior">
+            <input type="text" id="inputBusqueda" placeholder="Buscar sucursal..." onkeyup="filtrarSucursales()">
+        </div>
+
+        <table class="tabla-productos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Dirección</th>
+                    <th>Ciudad</th>
+                    <th>Teléfono</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </main>
+</div>
+
+<script>
+    let listaSucursalesGlobal = [];
+
+    document.addEventListener("DOMContentLoaded", cargarSucursales);
+
+    function cargarSucursales() {
+        fetch('../../php/obtener_sucursales_detalle.php')
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.status === 'ok') {
+                    listaSucursalesGlobal = resultado.data;
+                    llenarTabla(listaSucursalesGlobal);
+                } else {
+                    console.error("Error BD:", resultado.message);
+                }
+            })
+            .catch(error => console.error("Error en fetch:", error));
+    }
+
+    function llenarTabla(sucursales) {
+        const tbody = document.getElementById('cuerpoTabla');
+
+        if (sucursales.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No se encontraron sucursales</td></tr>';
+            return;
+        }
+
+        let filas = '';
+        let contador = 1;
+        sucursales.forEach(s => {
+            filas += `
+                <tr>
+                    <td>${contador}</td>
+                    <td>${s.NombreSucursal}</td>
+                    <td>${s.Direccion}</td>
+                    <td>${s.Ciudad}</td>
+                    <td>${s.Telefono}</td>
+                </tr>`;
+            contador++;
+        });
+
+        tbody.innerHTML = filas;
+    }
+
+    function filtrarSucursales() {
+        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+        llenarTabla(listaSucursalesGlobal.filter(s =>
+            s.NombreSucursal.toLowerCase().includes(texto) ||
+            s.Ciudad.toLowerCase().includes(texto)
+        ));
+    }
+
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+</body>
+</html>
