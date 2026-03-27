@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Inventario - Inicio</title>
+    <link rel="stylesheet" href="../../css/Administrador/inicioAdministrador.css">
+</head>
+
+<body>
+
+<header>
+    <h1 id="mensajeBienvenida">Cargando...</h1>
+</header>
+
+<div class="contenedor">
+
+    <aside class="menu">
+        <ul>
+            <div class="inicio">
+                <li><a href="inicioDueno.html">Inicio</a></li>
+            </div>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li><a href="inicioInventarioDueno.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <h2 id="subtituloBienvenida">Bienvenido</h2>
+        <p>Selecciona una opción del menú o una de las tarjetas para comenzar a trabajar con el sistema.</p>
+
+        <div class="tarjetas">
+
+            <div class="tarjeta" onclick="location.href='productos.html'" style="cursor:pointer;">
+                <h3>Productos</h3>
+                <p>Administrar productos del inventario.</p>
+            </div>
+
+            <div class="tarjeta" onclick="location.href='clientes.html'" style="cursor:pointer;">
+                <h3>Clientes</h3>
+                <p>Consultar o registrar clientes.</p>
+            </div>
+
+            <div class="tarjeta" onclick="location.href='inicioInventarioDueno.html'" style="cursor:pointer;">
+                <h3>Inventario</h3>
+                <p>Consultar el inventario por sucursal.</p>
+            </div>
+
+            <div class="tarjeta" onclick="location.href='usuarios.html'" style="cursor:pointer;">
+                <h3>Usuarios</h3>
+                <p>Gestionar usuarios del sistema.</p>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<footer>
+    <p>Sistema de Inventario © 2026</p>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const usuario = sessionStorage.getItem("usuarioLogueado");
+        const rol     = sessionStorage.getItem("rolUsuario");
+
+        if (!usuario) {
+            window.location.href = "../index.html";
+            return;
+        }
+
+        document.getElementById("mensajeBienvenida").textContent  = `Bienvenido, ${usuario}`;
+        document.getElementById("subtituloBienvenida").textContent = `Panel de control (${rol})`;
+    });
+
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario</title>
+    <link rel="stylesheet" href="../../css/productos.css">
+</head>
+
+<body>
+<header>
+    <h1>Consulta de Inventario</h1>
+</header>
+
+<div class="contenedor">
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioAdmin.html">Inicio</a></li>
+            <div class="productos">
+                <li><a href="#">Inventario</a></li>
+            </div>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Cliente</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <div class="barra-superior">
+            <select id="selectSucursal" onchange="cargarInventario()">
+                <option value="">-- Selecciona una sucursal --</option>
+            </select>
+            <input type="text" id="inputBusqueda" placeholder="Buscar producto..." onkeyup="filtrarInventario()">
+        </div>
+
+        <table class="tabla-productos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Inventario Sucursal</th>
+                    <th>Stock General</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <tr><td colspan="4" style="text-align:center;">Selecciona una sucursal para ver el inventario.</td></tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+
+<script>
+    let listaInventarioGlobal = [];
+
+    document.addEventListener("DOMContentLoaded", cargarSucursales);
+
+    function cargarSucursales() {
+        fetch('obtener_sucursales.php')
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.status === 'ok') {
+                    const select = document.getElementById('selectSucursal');
+                    resultado.data.forEach(sucursal => {
+                        const option = document.createElement('option');
+                        option.value = sucursal.SucursalId;
+                        option.textContent = sucursal.NombreSucursal;
+                        select.appendChild(option);
+                    });
+                } else {
+                    console.error("Error al cargar sucursales:", resultado.message);
+                }
+            })
+            .catch(error => console.error("Error en fetch:", error));
+    }
+
+    function cargarInventario() {
+        const sucursalId = document.getElementById('selectSucursal').value;
+        if (!sucursalId) {
+            document.getElementById('cuerpoTabla').innerHTML =
+                '<tr><td colspan="4" style="text-align:center;">Selecciona una sucursal para ver el inventario.</td></tr>';
+            listaInventarioGlobal = [];
+            return;
+        }
+        fetch(`obtener_inventario.php?sucursalId=${sucursalId}`)
+            .then(r => r.json())
+            .then(resultado => {
+                if (resultado.status === 'ok') {
+                    listaInventarioGlobal = resultado.data;
+                    document.getElementById('inputBusqueda').value = '';
+                    llenarTabla(listaInventarioGlobal);
+                } else {
+                    console.error("Error BD:", resultado.message);
+                }
+            })
+            .catch(error => console.error("Error en fetch:", error));
+    }
+
+    function llenarTabla(inventario) {
+        const tbody = document.getElementById('cuerpoTabla');
+        if (inventario.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No se encontraron productos</td></tr>';
+            return;
+        }
+        let filas = '';
+        inventario.forEach(item => {
+            let stockSucursal = parseInt(item.Inventario);
+            let stockGeneral  = parseInt(item.UnidadesEnStock);
+            let estiloSucursal = (stockSucursal <= 7) ? 'color: red; font-weight: bold;' : '';
+            let estiloGeneral  = (stockGeneral  <= 7) ? 'color: red; font-weight: bold;' : '';
+            filas += `
+                <tr>
+                    <td>${item.ProductoId}</td>
+                    <td>${item.NombreProducto}</td>
+                    <td style="${estiloSucursal}">${stockSucursal}</td>
+                    <td style="${estiloGeneral}">${stockGeneral}</td>
+                </tr>`;
+        });
+        tbody.innerHTML = filas;
+    }
+
+    function filtrarInventario() {
+        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+        llenarTabla(listaInventarioGlobal.filter(item =>
+            item.NombreProducto.toLowerCase().includes(texto)
+        ));
+    }
+
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+</body>
+</html>

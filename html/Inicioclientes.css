@@ -1,0 +1,385 @@
+/* ─────────────────────────────────────────
+   clientes.css  —  ZervePos
+   Mismo estilo base que inicio.css
+───────────────────────────────────────── */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f6f9;
+}
+
+/* ── HEADER ── */
+header {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+/* ── LAYOUT ── */
+.contenedor {
+    display: flex;
+}
+
+/* ── MENÚ LATERAL ── */
+.menu {
+    width: 220px;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    min-height: 100vh;
+    flex-shrink: 0;
+}
+
+.inicio {
+    background-color: #134b70;
+}
+
+.menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.menu a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 15px;
+    transition: background 0.2s;
+}
+
+.menu a:hover {
+    background: #1abc9c;
+}
+
+.menu-activo {
+    background: #1abc9c !important;
+    font-weight: bold;
+}
+
+/* ── CONTENIDO PRINCIPAL ── */
+.contenido {
+    flex: 1;
+    padding: 30px;
+}
+
+.contenido h2 {
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
+.contenido > p {
+    color: #666;
+    margin-bottom: 24px;
+}
+
+/* ── PESTAÑAS ── */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #dce3ec;
+    padding-bottom: 0;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 4px 4px 0 0;
+    transition: 0.2s;
+}
+
+.tab-btn:hover {
+    color: #1abc9c;
+    background: #f0fdf9;
+}
+
+.tab-btn.activo {
+    color: #1abc9c;
+    border-bottom-color: #1abc9c;
+    font-weight: bold;
+    background: white;
+}
+
+/* ── PANELES ── */
+.panel {
+    display: none;
+}
+
+.panel.activo {
+    display: block;
+}
+
+/* ── CARD ── */
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 28px;
+}
+
+.card h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 16px;
+    border-left: 4px solid #1abc9c;
+    padding-left: 10px;
+}
+
+/* ── FORMULARIO ── */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-grid .full {
+    grid-column: 1 / -1;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.campo label {
+    font-size: 13px;
+    color: #555;
+    font-weight: bold;
+}
+
+.campo input,
+.campo select {
+    padding: 9px 12px;
+    border: 1px solid #dce3ec;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    background: white;
+}
+
+.campo input:focus,
+.campo select:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.12);
+}
+
+.campo input:disabled {
+    background: #f4f6f9;
+    color: #888;
+    cursor: not-allowed;
+}
+
+/* ── BOTONES ── */
+.btn-accion {
+    margin-top: 20px;
+    padding: 10px 28px;
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-accion:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.btn-secundario {
+    margin-top: 20px;
+    margin-left: 10px;
+    padding: 10px 20px;
+    background: #ecf0f1;
+    color: #555;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-secundario:hover {
+    background: #dce3ec;
+}
+
+/* ── ALERTAS ── */
+.alerta {
+    padding: 10px 16px;
+    border-radius: 5px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.alerta.exito {
+    background: #eafaf1;
+    color: #1e8449;
+    border: 1px solid #a9dfbf;
+    display: block;
+}
+
+.alerta.error {
+    background: #fdedec;
+    color: #a93226;
+    border: 1px solid #f5b7b1;
+    display: block;
+}
+
+/* ── BUSCADOR ── */
+.buscador-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.buscador-row input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #dce3ec;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.buscador-row input:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.12);
+}
+
+.buscador-row button {
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #203a43, #2c5364);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.buscador-row button:hover {
+    opacity: 0.85;
+}
+
+/* ── TABLA ── */
+.tabla-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+thead tr {
+    background: linear-gradient(135deg, #0f2027, #2c5364);
+    color: white;
+}
+
+thead th {
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.15s;
+}
+
+tbody tr:hover {
+    background: #f4fdf9;
+}
+
+tbody td {
+    padding: 10px 14px;
+    color: #444;
+}
+
+/* ── BADGE ID ── */
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: #eafaf1;
+    color: #1e8449;
+    font-weight: bold;
+}
+
+/* ── BOTONES DE TABLA ── */
+.btn-tabla {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: Arial, Helvetica, sans-serif;
+    transition: background 0.15s;
+}
+
+.btn-editar {
+    background: #eaf4fd;
+    color: #1a5276;
+}
+
+.btn-editar:hover {
+    background: #aed6f1;
+}
+
+.btn-eliminar {
+    background: #fdedec;
+    color: #a93226;
+    margin-left: 5px;
+}
+
+.btn-eliminar:hover {
+    background: #f5b7b1;
+}
+
+/* ── SIN DATOS / CARGANDO ── */
+.sin-datos {
+    text-align: center;
+    padding: 40px;
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* ── FOOTER ── */
+footer {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    font-size: 13px;
+}
