@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
-  const usuario = ref('')
-  const rol = ref('')
+  const usuario = ref(sessionStorage.getItem('usuarioLogueado') || '')
+  const rol     = ref(sessionStorage.getItem('rolUsuario') || '')
 
   async function iniciarSesion(nombreUsuario, contrasena) {
     try {
@@ -20,22 +20,20 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (data.status === 1) {
         usuario.value = data.NombreCompleto
-        rol.value = data.Rol
+        rol.value     = data.Rol
 
-        sessionStorage.setItem('usuarioId', data.UsuarioId)
+        sessionStorage.setItem('usuarioId',       data.UsuarioId)
         sessionStorage.setItem('usuarioLogueado', data.NombreCompleto)
-        sessionStorage.setItem('rolUsuario', data.Rol)
-        sessionStorage.setItem('sucursalId', data.SucursalId)
+        sessionStorage.setItem('rolUsuario',      data.Rol)
+        sessionStorage.setItem('sucursalId',      data.SucursalId)
 
-        // CORRECCIÓN 1: Objeto de rutas asignado correctamente
         const rutasRoles = {
-          'Cajero': '/cajero',
+          'Cajero':        '/app/dashboard',
           'Administrador': '/seleccionar-sucursal',
-          'Dueño': '/seleccionar-sucursal'
+          'Dueño':         '/seleccionar-sucursal'
         }
 
         const destino = rutasRoles[data.Rol]
-
         if (!destino) return { error: 'Rol desconocido: ' + data.Rol }
 
         return { ok: true, nombre: data.NombreCompleto, destino }
@@ -45,11 +43,16 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
     } catch (error) {
-      // CORRECCIÓN 2: Mostrar el error real en la consola para depurar fácilmente
       console.error('Error atrapado en el JS:', error)
       return { error: 'Error interno: No se pudo procesar la solicitud.' }
     }
   }
 
-  return { usuario, rol, iniciarSesion }
+  function logout() {
+    usuario.value = ''
+    rol.value     = ''
+    sessionStorage.clear()
+  }
+
+  return { usuario, rol, iniciarSesion, logout }
 })
