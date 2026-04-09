@@ -1,26 +1,41 @@
 <template>
-  <div class="fondo"></div>
+  <div class="fondo">
+    <div class="contenedor">
 
-  <div class="selector-box">
-    <h2>¿En qué sucursal trabajarás hoy?</h2>
-    <p>{{ nombre }}</p>
+      <div class="encabezado">
+        <span class="brand-icon">⚡</span>
+        <h1 class="brand-name">ZervePOS</h1>
+      </div>
 
-    <div v-if="cargando" class="estado">Cargando sucursales...</div>
+      <h2 class="titulo">Selecciona una sucursal</h2>
+      <p class="subtitulo">Bienvenido, <strong>{{ auth.usuario }}</strong>. ¿Con qué sucursal vas a trabajar hoy?</p>
 
-    <div v-else-if="sucursales.length === 0" class="estado">
-      No tienes sucursales asignadas.
-    </div>
+      <div v-if="cargando" class="estado">
+        <span class="spinner"></span>
+        <p>Cargando sucursales...</p>
+      </div>
 
-    <div v-else class="sucursales">
-      <button
-        v-for="sucursal in sucursales"
-        :key="sucursal.SucursalId"
-        class="sucursal-btn"
-        @click="seleccionar(sucursal)"
-      >
-        <span class="sucursal-nombre">{{ sucursal.NombreSucursal }}</span>
-        <span class="sucursal-ciudad">{{ sucursal.Ciudad }}</span>
-      </button>
+      <div v-else-if="error" class="estado error-msg">
+        <p>{{ error }}</p>
+        <button @click="cargarSucursales" class="btn-reintentar">Reintentar</button>
+      </div>
+
+      <div v-else class="cards-grid">
+        <button
+          v-for="sucursal in sucursales"
+          :key="sucursal.SucursalId"
+          class="card"
+          @click="seleccionar(sucursal)"
+        >
+          <span class="card-icon">🏪</span>
+          <div class="card-info">
+            <h3 class="card-nombre">{{ sucursal.NombreSucursal }}</h3>
+            <p class="card-direccion">{{ sucursal.Direccion }}</p>
+          </div>
+          <span class="card-arrow">→</span>
+        </button>
+      </div>
+
     </div>
   </div>
 </template>
@@ -28,138 +43,199 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from '../composables/useToast'
+import { useAuthStore } from '../stores/auth'
 
-const router    = useRouter()
-const toast     = useToast()
+const router = useRouter()
+const auth   = useAuthStore()
+
 const sucursales = ref([])
-const cargando  = ref(true)
-const nombre    = sessionStorage.getItem('usuarioLogueado')
-const rol       = sessionStorage.getItem('rolUsuario')
-
-onMounted(async () => {
-  await cargarSucursales()
-})
+const cargando   = ref(true)
+const error      = ref(null)
 
 async function cargarSucursales() {
+  cargando.value = true
+  error.value    = null
+
   try {
+    const usuarioId = sessionStorage.getItem('usuarioId')
     const respuesta = await fetch('/php/obtener_sucursales.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        UsuarioId: sessionStorage.getItem('usuarioId')
-      })
+      body: JSON.stringify({ UsuariosId: usuarioId })
     })
 
     const data = await respuesta.json()
 
     if (data.status === 1) {
       sucursales.value = data.sucursales
-
-      // Si solo tiene una sucursal entra directo sin preguntar
-      if (sucursales.value.length === 1) {
-        seleccionar(sucursales.value[0])
-      }
     } else {
-      toast.error('No se pudieron cargar las sucursales.')
+      error.value = 'No se encontraron sucursales disponibles.'
     }
-  } catch (error) {
-    toast.error('No se pudo conectar con el servidor.')
+  } catch (e) {
+    console.error(e)
+    error.value = 'Error al conectar con el servidor.'
   } finally {
     cargando.value = false
   }
 }
 
 function seleccionar(sucursal) {
-  sessionStorage.setItem('sucursalId',     sucursal.SucursalId)
-  sessionStorage.setItem('sucursalNombre', sucursal.NombreSucursal)
-
-  const destino = {
-    'Dueño':         '/dueno',
-    'Administrador': '/admin'
-  }[rol]
-
-  router.push(destino)
+  auth.setSucursal(sucursal.SucursalId, sucursal.NombreSucursal)
+  router.push('/app/dashboard')
 }
+
+onMounted(cargarSucursales)
 </script>
 
 <style scoped>
 .fondo {
-  position: fixed;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2535 0%, #1a3a4a 60%, #0f2535 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.contenedor {
   width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  z-index: 0;
+  max-width: 680px;
 }
 
-.selector-box {
-  position: relative;
-  z-index: 1;
-  width: 480px;
-  margin: 0 auto;
-  margin-top: 10vh;
-  padding: 44px 36px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: white;
-}
-
-h2 {
-  text-align: center;
-  font-size: 26px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-p {
-  text-align: center;
-  color: rgba(255,255,255,0.55);
-  font-size: 14px;
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: 32px;
 }
 
-.estado {
+.brand-icon {
+  font-size: 1.8rem;
+}
+
+.brand-name {
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.titulo {
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
   text-align: center;
-  color: rgba(255,255,255,0.5);
-  padding: 20px 0;
+  margin: 0 0 8px;
 }
 
-.sucursales {
+.subtitulo {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  font-size: 0.95rem;
+  margin: 0 0 36px;
+}
+
+.subtitulo strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.cards-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
-.sucursal-btn {
+.card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   width: 100%;
-  padding: 16px 20px;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.06);
-  color: white;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.25s;
+  text-align: left;
+  color: white;
+  transition: background 0.2s, transform 0.15s, border-color 0.2s;
+}
+
+.card:hover {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: #4fc3f7;
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.card-info {
+  flex: 1;
+}
+
+.card-nombre {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #fff;
+}
+
+.card-direccion {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+.card-arrow {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.card:hover .card-arrow {
+  color: #4fc3f7;
+  transform: translateX(4px);
+}
+
+.estado {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 40px 0;
 }
 
-.sucursal-btn:hover {
-  background: rgba(36, 121, 212, 0.3);
-  border-color: rgba(36, 121, 212, 0.6);
-  transform: translateY(-1px);
+.error-msg {
+  color: #ff7070;
 }
 
-.sucursal-nombre {
-  font-size: 16px;
-  font-weight: 600;
+.btn-reintentar {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid #ff7070;
+  border-radius: 8px;
+  color: #ff7070;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
 }
 
-.sucursal-ciudad {
-  font-size: 13px;
-  color: rgba(255,255,255,0.5);
+.btn-reintentar:hover {
+  background: rgba(255, 80, 80, 0.15);
 }
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #4fc3f7;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>

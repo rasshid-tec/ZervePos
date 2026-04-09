@@ -21,21 +21,25 @@ $params = [
     [&$status,   SQLSRV_PARAM_OUT, SQLSRV_PHPTYPE_INT, SQLSRV_SQLTYPE_INT]
 ];
 
-$sql  = "EXEC ObtenerSucursalesUsuario @UsuarioId=?, @Status=? OUTPUT";
+$sql = "{CALL ObtenerSucursalesUsuario(?, ?)}";
 $stmt = sqlsrv_query($conn, $sql, $params);
 
 if ($stmt === false) {
-    echo json_encode(["status" => 0]);
+    echo json_encode(["status" => 0, "debug" => sqlsrv_errors()]);
     exit;
 }
 
-sqlsrv_next_result($stmt);
+// 1. Leer el SELECT primero
+$sucursales = [];
+while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+    $sucursales[] = $row;
+}
 
+// 2. Avanzar todos los result sets para que se popule el OUTPUT
+while (sqlsrv_next_result($stmt)) {}
+
+// 3. Ahora sí evaluar el status
 if ($status === 1) {
-    $sucursales = [];
-    while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
-        $sucursales[] = $row;
-    }
     echo json_encode(["status" => 1, "sucursales" => $sucursales]);
 } else {
     echo json_encode(["status" => 0]);

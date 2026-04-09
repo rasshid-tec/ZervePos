@@ -48,11 +48,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function setSucursal(id, nombre) {
+    sessionStorage.setItem('sucursalId',     id)
+    sessionStorage.setItem('sucursalNombre', nombre)
+  }
+
   function logout() {
     usuario.value = ''
     rol.value     = ''
     sessionStorage.clear()
   }
 
-  return { usuario, rol, iniciarSesion, logout }
+  return { usuario, rol, iniciarSesion, logout, setSucursal }
 })
