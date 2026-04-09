@@ -41,7 +41,7 @@ async function iniciarSesion() {
     }
 
     try {
-        const respuesta = await fetch("/html/login.php", {
+        const respuesta = await fetch("/php/login.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

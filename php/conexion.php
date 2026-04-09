@@ -1,30 +1,23 @@
 <?php
+// 1. El servidor (tu dirección de Azure)
+$serverName = "zervepos-rasshid-2026.database.windows.net"; 
 
-$serverName = "localhost";
+// 2. Las opciones con la estructura correcta ("Clave" => "Valor")
+$connectionOptions = [
+    "Database" => "ZervePos",
+    "Uid"      => "adminZerve",
+    "PWD"      => "ContraZervePos1234",
+    "TrustServerCertificate" => true,
+    "CharacterSet" => "UTF-8" // <-- ¡ESTA ES LA MAGIA QUE FALTABA!
+];
 
-$connectionOptions = array(
-    "Database" => "pos",
-    "Uid" => "sa",
-    "PWD" => "1234"
-);
+// 3. Intentamos la conexión
+$conn = sqlsrv_connect($serverName, $connectionOptions);
 
-$conn = sqlsrv_connect($serverName,$connectionOptions);
-
-$data = json_decode(file_get_contents("php://input"),true);
-
-$usuario = $data["usuario"];
-$password = $data["password"];
-
-$sql = "SELECT * FROM usuarios WHERE usuario=? AND password=?";
-
-$params = array($usuario,$password);
-
-$stmt = sqlsrv_query($conn,$sql,$params);
-
-if($row = sqlsrv_fetch_array($stmt)){
-    echo json_encode(["status"=>"ok"]);
-}else{
-    echo json_encode(["status"=>"error"]);
+if ($conn === false) {
+    echo "No se pudo conectar al servidor.<br />";
+    die(print_r(sqlsrv_errors(), true));
 }
-
+// Puedes descomentar la siguiente línea para probar que ya funciona
+// echo "¡Conexión exitosa!";
 ?>

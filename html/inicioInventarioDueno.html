@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Inventario - Inventario</title>
+    <link rel="stylesheet" href="/css/Dueño/InicioInventarioDueno.css">
+</head>
+
+<body>
+
+<header>
+    <h1 id="mensajeBienvenida">Cargando...</h1>
+</header>
+
+<div class="contenedor">
+
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioDueno.html">Inicio</a></li>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li class="inicio-activo"><a href="InicioInventarioDueno.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <h2 id="subtituloBienvenida">Inventario</h2>
+        <p>Selecciona una opción para gestionar el inventario del sistema.</p>
+
+        <div class="tarjetas">
+
+            <div class="tarjeta entradas" onclick="location.href='EntradasDueno.html'">
+                <div class="icono">📥</div>
+                <h3>Entradas</h3>
+                <p>Registrar entradas de productos al inventario.</p>
+            </div>
+
+            <div class="tarjeta salidas" onclick="location.href='salidasDueno.html'">
+                <div class="icono">📤</div>
+                <h3>Salidas</h3>
+                <p>Registrar salidas de productos del inventario.</p>
+            </div>
+
+            <div class="tarjeta sucursales" onclick="location.href='sucursalesDueno.html'">
+                <div class="icono">🏪</div>
+                <h3>Sucursales</h3>
+                <p>Consultar el inventario por sucursal.</p>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<footer>
+    <p>Sistema de Inventario © 2026</p>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const usuario = sessionStorage.getItem("usuarioLogueado");
+        const rol     = sessionStorage.getItem("rolUsuario");
+
+        if (!usuario) {
+            window.location.href = "../index.html";
+            return;
+        }
+
+        document.getElementById("mensajeBienvenida").textContent = `Bienvenido, ${usuario}`;
+        document.getElementById("subtituloBienvenida").textContent = `Inventario (${rol})`;
+    });
+
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            sessionStorage.clear();
+            window.location.href = "../index.html";
+        }
+    }
+</script>
+
+</body>
+</html>

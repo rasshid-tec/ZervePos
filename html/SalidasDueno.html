@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Salidas - ZervePos</title>
+    <link rel="stylesheet" href="../../css/Dueño/SalidasDueno.css">
+</head>
+
+<body>
+
+<header>
+    <h1 id="mensajeBienvenida">Cargando...</h1>
+</header>
+
+<div class="contenedor">
+    <aside class="menu">
+        <ul>
+            <li><a href="inicioDueno.html">Inicio</a></li>
+            <li><a href="productos.html">Productos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li class="inicio-activo"><a href="InicioInventarioDueno.html">Inventario</a></li>
+            <li><a href="reportes.html">Reportes</a></li>
+            <li><a href="usuarios.html">Usuarios</a></li>
+            <li><a href="#" onclick="cerrarSesion()">Cerrar Sesión</a></li>
+        </ul>
+    </aside>
+
+    <main class="contenido">
+        <h2>Registrar Salida</h2>
+        <div class="formulario-salida">
+            <div class="fila">
+                <div class="campo">
+                    <label>Sucursal Origen *</label>
+                    <select id="selectSucursal">
+                        <option value="">-- Selecciona --</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label>Tipo de Salida *</label>
+                    <select id="selectTipo" onchange="toggleTipo()">
+                        <option value="">-- Selecciona --</option>
+                        <option value="VENTA">Venta</option>
+                        <option value="MERMA">Merma</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                        <option value="AJUSTE">Ajuste</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="fila" id="filaSucursalDestino" style="display:none;">
+                <div class="campo">
+                    <label>Sucursal Destino *</label>
+                    <select id="selectSucursalDestino">
+                        <option value="">-- Selecciona destino --</option>
+                    </select>
+                </div>
+                <div class="campo"></div>
+            </div>
+
+            <div class="fila">
+                <div class="campo full">
+                    <label>Motivo *</label>
+                    <input type="text" id="inputMotivo" placeholder="Descripción breve..." maxlength="100">
+                </div>
+            </div>
+
+            <div class="seccion-productos">
+                <h3>Buscar Productos</h3>
+                <div class="barra-busqueda">
+                    <input type="text" id="inputBusqueda" placeholder="Nombre del producto..." onkeyup="filtrarProductos()">
+                </div>
+                <div class="lista-productos" id="listaProductos"></div>
+            </div>
+
+            <div class="seccion-tabla" id="seccionTabla" style="display:none;">
+                <table class="tabla-agregados">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaAgregados"></tbody>
+                </table>
+            </div>
+
+            <div class="fila-boton">
+                <button class="btn-guardar" onclick="guardarSalida()">Registrar</button>
+                <button class="btn-cancelar" onclick="location.reload()">Limpiar</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal-overlay" id="modalTransferencia" style="display:none;">
+    <div class="modal">
+        <h3>Confirmar Transferencia</h3>
+        <p id="textoConfirmacion"></p>
+        <button class="btn-guardar" onclick="confirmarTransferencia()">Confirmar</button>
+        <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+    </div>
+</div>
+
+<script>
+    let todosLosProductos = [];
+    let productosAgregados = [];
+    let payloadPendiente = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const usuario = sessionStorage.getItem("usuarioLogueado");
+        if (!usuario) { window.location.href = "../index.html"; return; }
+        document.getElementById("mensajeBienvenida").textContent = `Bienvenido, ${usuario}`;
+        cargarSucursales();
+        cargarProductos();
+    });
+
+    function toggleTipo() {
+        const tipo = document.getElementById('selectTipo').value;
+        document.getElementById('filaSucursalDestino').style.display = (tipo === 'TRANSFERENCIA') ? 'flex' : 'none';
+    }
+
+    function cargarSucursales() {
+        fetch('../../php/obtener_sucursales.php')
+            .then(r => r.json())
+            .then(res => {
+                if (res.status !== 'ok') return;
+                const selO = document.getElementById('selectSucursal');
+                const selD = document.getElementById('selectSucursalDestino');
+                res.data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.SucursalId;
+                    opt.textContent = s.NombreSucursal;
+                    selO.appendChild(opt.cloneNode(true));
+                    selD.appendChild(opt);
+                });
+            });
+    }
+
+    function cargarProductos() {
+        fetch('../../php/obtener_productos.php')
+            .then(r => r.json())
+            .then(res => { if (res.status === 'ok') todosLosProductos = res.data; });
+    }
+
+    function filtrarProductos() {
+        const texto = document.getElementById('inputBusqueda').value.toUpperCase();
+        const lista = document.getElementById('listaProductos');
+        if (!texto) { lista.innerHTML = ''; return; }
+        
+        const filtrados = todosLosProductos.filter(p => p.NombreProducto.toUpperCase().includes(texto));
+        lista.innerHTML = filtrados.map(p => `
+            <div class="item-producto">
+                <span>${p.NombreProducto}</span>
+                <button onclick="agregarProducto(${p.ProductoId}, '${p.NombreProducto}')">Agregar</button>
+            </div>
+        `).join('');
+    }
+
+    function agregarProducto(id, nombre) {
+        const existe = productosAgregados.find(p => p.ProductoId === id);
+        if (existe) { existe.Cantidad++; } 
+        else { productosAgregados.push({ ProductoId: id, NombreProducto: nombre, Cantidad: 1 }); }
+        renderizarTabla();
+    }
+
+    function renderizarTabla() {
+        const tbody = document.getElementById('cuerpoTablaAgregados');
+        document.getElementById('seccionTabla').style.display = productosAgregados.length ? 'block' : 'none';
+        tbody.innerHTML = productosAgregados.map((p, i) => `
+            <tr>
+                <td>${p.ProductoId}</td>
+                <td>${p.NombreProducto}</td>
+                <td><input type="number" value="${p.Cantidad}" onchange="productosAgregados[${i}].Cantidad = parseInt(this.value)"></td>
+                <td><button onclick="productosAgregados.splice(${i}, 1); renderizarTabla()">❌</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function guardarSalida() {
+        const payload = {
+            sucursalId: document.getElementById('selectSucursal').value,
+            tipo: document.getElementById('selectTipo').value, // Esto envía "VENTA", "MERMA", etc.
+            motivo: document.getElementById('inputMotivo').value.trim(),
+            productos: productosAgregados
+        };
+
+        if (!payload.sucursalId || !payload.tipo || !payload.motivo || !payload.productos.length) {
+            alert("Completa todos los campos."); return;
+        }
+
+        if (payload.tipo === 'TRANSFERENCIA') {
+            payload.sucursalDestino = document.getElementById('selectSucursalDestino').value;
+            if (!payload.sucursalDestino || payload.sucursalDestino === payload.sucursalId) {
+                alert("Selecciona una sucursal destino diferente."); return;
+            }
+            payloadPendiente = payload;
+            document.getElementById('textoConfirmacion').innerText = `¿Confirmar transferencia?`;
+            document.getElementById('modalTransferencia').style.display = 'flex';
+        } else {
+            enviarSalida(payload);
+        }
+    }
+
+    function confirmarTransferencia() {
+        document.getElementById('modalTransferencia').style.display = 'none';
+        enviarSalida(payloadPendiente);
+    }
+
+    function enviarSalida(payload) {
+        fetch('../../php/registrar_salida.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(async r => {
+            const text = await r.text();
+            try { return JSON.parse(text); } 
+            catch (e) { throw new Error("Error SQL: " + text); }
+        })
+        .then(res => {
+            if (res.status === 'ok') { alert("✅ Guardado."); location.reload(); } 
+            else { alert("❌ " + res.message); }
+        })
+        .catch(err => alert(err.message));
+    }
+
+    function cerrarModal() { document.getElementById('modalTransferencia').style.display = 'none'; }
+    function cerrarSesion() { sessionStorage.clear(); window.location.href = "../index.html"; }
+</script>
+</body>
+</html>

@@ -13,6 +13,8 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "mssql": "^12.2.0"
+    "mssql": "^12.2.0",
+    "pinia": "^3.0.4",
+    "vue-router": "^5.0.4"
   }
 }
