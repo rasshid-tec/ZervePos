@@ -15,22 +15,22 @@
         <p>Cargando sucursales...</p>
       </div>
 
-      <div v-else-if="error" class="estado error-msg">
-        <p>{{ error }}</p>
+      <div v-else-if="sucursalStore.sucursales.length === 0" class="estado error-msg">
+        <p>No se encontraron sucursales disponibles.</p>
         <button @click="cargarSucursales" class="btn-reintentar">Reintentar</button>
       </div>
 
       <div v-else class="cards-grid">
         <button
-          v-for="sucursal in sucursales"
-          :key="sucursal.SucursalId"
+          v-for="sucursal in sucursalStore.sucursales"
+          :key="sucursal.sucursalId"
           class="card"
           @click="seleccionar(sucursal)"
         >
           <span class="card-icon">🏪</span>
           <div class="card-info">
-            <h3 class="card-nombre">{{ sucursal.NombreSucursal }}</h3>
-            <p class="card-direccion">{{ sucursal.Direccion }}</p>
+            <h3 class="card-nombre">{{ sucursal.nombre }}</h3>
+            <p class="card-direccion">{{ sucursal.direccion }}</p>
           </div>
           <span class="card-arrow">→</span>
         </button>
@@ -41,50 +41,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useSucursalStore } from '../stores/sucursal'
+import { useSucursales } from '../composables/useSucursales'
 
 const router = useRouter()
-const auth   = useAuthStore()
-
-const sucursales = ref([])
-const cargando   = ref(true)
-const error      = ref(null)
-
-async function cargarSucursales() {
-  cargando.value = true
-  error.value    = null
-
-  try {
-    const usuarioId = sessionStorage.getItem('usuarioId')
-    const respuesta = await fetch('/php/obtener_sucursales.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ UsuariosId: usuarioId })
-    })
-
-    const data = await respuesta.json()
-
-    if (data.status === 1) {
-      sucursales.value = data.sucursales
-    } else {
-      error.value = 'No se encontraron sucursales disponibles.'
-    }
-  } catch (e) {
-    console.error(e)
-    error.value = 'Error al conectar con el servidor.'
-  } finally {
-    cargando.value = false
-  }
-}
+const auth = useAuthStore()
+const sucursalStore = useSucursalStore()
+const { cargando, cargarSucursales, seleccionarSucursal } = useSucursales()
 
 function seleccionar(sucursal) {
-  auth.setSucursal(sucursal.SucursalId, sucursal.NombreSucursal)
+  seleccionarSucursal(sucursal)
   router.push('/app/dashboard')
 }
 
-onMounted(cargarSucursales)
+onMounted(() => {
+  cargarSucursales()
+})
 </script>
 
 <style scoped>

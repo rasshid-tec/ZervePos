@@ -60,6 +60,7 @@ if ($status === 1 && $row !== null) {
     echo json_encode([
         "status" => 1,
         "UsuarioId" => $row['UsuariosId'],
+        'EmpleadoId' => (int)$row['EmpleadoId'],
         "NombreCompleto" => $row['NombreCompleto'],
         "Rol" => $row['Rol'],
         "SucursalId" => $row['SucursalId']
