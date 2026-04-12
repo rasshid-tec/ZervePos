@@ -124,12 +124,12 @@ export function useUsuarios() {
             const resultado = await response.json();
             
             if (resultado.status !== 'ok') {
-                toast.registrarToast('error', 'Error al crear usuario', resultado.message);
+                toast.error(`Error al crear usuario: ${resultado.message}`);
                 return { success: false, message: resultado.message };
             }
             
-            toast.registrarToast('exito', 'Usuario creado', `ID: ${resultado.empleadoId}`);
-            
+            toast.success(`Usuario creado - ID: ${resultado.empleadoId}`);
+
             // Recargar lista
             await obtenerUsuarios();
             

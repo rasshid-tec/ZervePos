@@ -197,21 +197,18 @@ function crearUsuario($conn) {
         throw new Exception('Error en SP: ' . sqlsrv_errors()[0]['message']);
     }
     
-    // Avanzar al resultado del SELECT
-    sqlsrv_next_result($stmt);
-    
-    // Obtener resultado
     $resultado = null;
     if (sqlsrv_fetch($stmt)) {
-        $resultado = array(
-            'EmpleadoIdNuevo' => sqlsrv_get_field($stmt, 0),
-            'Status' => sqlsrv_get_field($stmt, 1)
-        );
-    }
+    $resultado = array(
+        'EmpleadoIdNuevo' => sqlsrv_get_field($stmt, 0),
+        'Status' => sqlsrv_get_field($stmt, 1)
+    );
+}
     
     sqlsrv_free_stmt($stmt);
     
     if (!$resultado || $resultado['Status'] != 1) {
+        error_log("Error: Status=" . ($resultado['Status'] ?? 'null'));     
         http_response_code(400);
         echo json_encode([
             "status" => "error",
@@ -281,9 +278,9 @@ function obtenerRolesPermitidos($conn) {
     $rolesPermitidos = [];
     
     if ($rol === 'Dueño') {
-        $rolesPermitidos = ['Dueño', 'Administrador', 'Cajero'];
+    $rolesPermitidos = ['Dueño', 'Administrador', 'Cajero'];
     } elseif ($rol === 'Administrador') {
-        $rolesPermitidos = ['Administrador', 'Cajero'];
+        $rolesPermitidos = ['Cajero'];  // Solo Cajero
     } else {
         $rolesPermitidos = [];
     }

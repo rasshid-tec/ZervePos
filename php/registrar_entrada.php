@@ -1,8 +1,6 @@
 <?php
+// php/registrar_entrada.php
 header('Content-Type: application/json; charset=utf-8');
-// Desactivamos errores visuales para que no rompan el JSON, pero los guardamos en el log
-ini_set('display_errors', 0); 
-error_reporting(E_ALL);
 
 $serverName = "zervepos-rasshid-2026.database.windows.net";
 $connectionOptions = array(
@@ -15,96 +13,110 @@ $connectionOptions = array(
 );
 
 $conn = sqlsrv_connect($serverName, $connectionOptions);
+
 if ($conn === false) {
-    echo json_encode(["status" => "error", "message" => "Error de conexión a BD"]);
+    echo json_encode([
+        "status" => "error",
+        "message" => "Error de conexión a la base de datos"
+    ]);
     exit;
 }
 
-$body = json_decode(file_get_contents("php://input"), true);
+try {
+    // Obtener datos del POST
+    $data = json_decode(file_get_contents("php://input"), true);
 
-// Validación básica de datos recibidos
-if (!$body) {
-    echo json_encode(["status" => "error", "message" => "No se recibieron datos (JSON inválido)"]);
-    exit;
-}
-
-$sucursalId  = (int)$body['sucursalId'];
-$tipo        = $body['tipo'];
-$descripcion = $body['descripcion'];
-$facturado   = $body['facturado'];
-$productos   = $body['productos'];
-$empleadoId  = 1; 
-
-sqlsrv_begin_transaction($conn);
-
-$facturaId = null;
-
-if ($facturado === 'si') {
-    $proveedorId  = (int)$body['proveedorId'];
-    $rfc          = $body['rfc'];
-    $fechaFactura = $body['fechaFactura']; 
-    $totalFactura = floatval($body['totalFactura']);
-
-    // CAMBIO CRÍTICO: Usamos SCOPE_IDENTITY() en lugar de OUTPUT para Azure
-    $sqlFactura = "INSERT INTO Facturas (ProveedorId, Total, Fecha, RFC) VALUES (?, ?, ?, ?); SELECT SCOPE_IDENTITY() AS LastId;";
-    $stmtF = sqlsrv_query($conn, $sqlFactura, [$proveedorId, $totalFactura, $fechaFactura, $rfc]);
-
-    if ($stmtF === false) {
-        sqlsrv_rollback($conn);
-        echo json_encode(["status" => "error", "message" => "Error al insertar Factura", "debug" => sqlsrv_errors()]);
-        exit;
+    if (!$data) {
+        throw new Exception("Datos inválidos");
     }
 
-    // Avanzamos al segundo set de resultados (el SELECT SCOPE_IDENTITY)
-    sqlsrv_next_result($stmtF);
-    $rowF = sqlsrv_fetch_array($stmtF, SQLSRV_FETCH_ASSOC);
-    $facturaId = $rowF['LastId'];
+    $sucursalId = intval($data['sucursalId']);
+    $empleadoId = intval($data['empleadoId']);
+    $tipo = $data['tipo'];
+    $motivo = $data['motivo'] ?? null;
+    $detalles = $data['detalles'] ?? [];
+    $fecha = date('Y-m-d H:i:s');
 
-    foreach ($productos as $p) {
-        $lote = !empty($p['Lote']) ? $p['Lote'] : null;
-        $fVenc = !empty($p['FechaVencimiento']) ? $p['FechaVencimiento'] : null;
+    // Validaciones
+    if (!$sucursalId || !$empleadoId || !$tipo || empty($detalles)) {
+        throw new Exception("Faltan datos requeridos");
+    }
 
-        $sqlDet = "INSERT INTO DetallesFactura (FacturaId, ProductoId, Cantidad, PrecioCompra, Lote, FechaVencimiento) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmtDet = sqlsrv_query($conn, $sqlDet, [$facturaId, (int)$p['ProductoId'], (int)$p['Cantidad'], floatval($p['PrecioCompra']), $lote, $fVenc]);
+    // Iniciar transacción
+    sqlsrv_begin_transaction($conn);
 
-        if ($stmtDet === false) {
-            sqlsrv_rollback($conn);
-            echo json_encode(["status" => "error", "message" => "Error en detalle de factura", "debug" => sqlsrv_errors()]);
-            exit;
+    // Insertar la entrada
+    $sqlEntrada = "INSERT INTO [dbo].[Entradas] (SucursalId, EmpleadoId, Tipo, Motivo, Fecha)
+                   VALUES (?, ?, ?, ?, ?)";
+    
+    $stmtEntrada = sqlsrv_query($conn, $sqlEntrada, [$sucursalId, $empleadoId, $tipo, $motivo, $fecha]);
+
+    if ($stmtEntrada === false) {
+        throw new Exception("Error al insertar entrada");
+    }
+
+    // Obtener el ID de la entrada insertada
+    $sqlGetId = "SELECT @@IDENTITY AS EntradaId";
+    $stmtGetId = sqlsrv_query($conn, $sqlGetId);
+    $row = sqlsrv_fetch_array($stmtGetId, SQLSRV_FETCH_ASSOC);
+    $entradaId = intval($row['EntradaId']);
+    sqlsrv_free_stmt($stmtGetId);
+
+    // Insertar detalles y actualizar inventario
+    foreach ($detalles as $detalle) {
+        $productoId = intval($detalle['productoId']);
+        $cantidad = intval($detalle['cantidad']);
+
+        // Insertar en DetalleEntrada
+        $sqlDetalle = "INSERT INTO [dbo].[DetalleEntrada] (EntradaId, ProductoId, Cantidad)
+                       VALUES (?, ?, ?)";
+        
+        $stmtDetalle = sqlsrv_query($conn, $sqlDetalle, [$entradaId, $productoId, $cantidad]);
+
+        if ($stmtDetalle === false) {
+            throw new Exception("Error al insertar detalle");
         }
+
+        sqlsrv_free_stmt($stmtDetalle);
+
+        // Actualizar o insertar en Inventario
+        $sqlUpdateInventario = "MERGE INTO [dbo].[Inventario] AS target
+                                USING (SELECT ? AS ProductoId, ? AS SucursalId, ? AS Cantidad) AS source
+                                ON target.ProductoId = source.ProductoId AND target.SucursalId = source.SucursalId
+                                WHEN MATCHED THEN
+                                    UPDATE SET Inventario = Inventario + source.Cantidad
+                                WHEN NOT MATCHED THEN
+                                    INSERT (ProductoId, SucursalId, Inventario)
+                                    VALUES (source.ProductoId, source.SucursalId, source.Cantidad);";
+
+        $stmtInventario = sqlsrv_query($conn, $sqlUpdateInventario, [$productoId, $sucursalId, $cantidad]);
+
+        if ($stmtInventario === false) {
+            throw new Exception("Error al actualizar inventario");
+        }
+
+        sqlsrv_free_stmt($stmtInventario);
     }
-}
 
-// 2. Insertar Entrada
-$sqlEnt = "INSERT INTO Entradas (FacturaId, SucursalId, EmpleadoId, Tipo, Fecha, Descripcion) VALUES (?, ?, ?, ?, GETDATE(), ?)";
-$stmtEnt = sqlsrv_query($conn, $sqlEnt, [$facturaId, $sucursalId, $empleadoId, $tipo, $descripcion]);
+    // Confirmar transacción
+    sqlsrv_commit($conn);
+    sqlsrv_close($conn);
 
-if ($stmtEnt === false) {
+    echo json_encode([
+        "status" => "ok",
+        "message" => "Entrada registrada correctamente",
+        "data" => [
+            "entradaId" => $entradaId
+        ]
+    ]);
+
+} catch (Exception $e) {
     sqlsrv_rollback($conn);
-    echo json_encode(["status" => "error", "message" => "Error al registrar Entrada", "debug" => sqlsrv_errors()]);
+    sqlsrv_close($conn);
+    echo json_encode([
+        "status" => "error",
+        "message" => $e->getMessage()
+    ]);
     exit;
 }
-
-// 3. Actualizar Inventario
-foreach ($productos as $p) {
-    $cant = (int)$p['Cantidad'];
-    $pid  = (int)$p['ProductoId'];
-
-    $sqlInv = "IF EXISTS (SELECT 1 FROM Inventario WHERE ProductoId = ? AND SucursalId = ?)
-               UPDATE Inventario SET Inventario = Inventario + ? WHERE ProductoId = ? AND SucursalId = ?
-               ELSE
-               INSERT INTO Inventario (ProductoId, SucursalId, Inventario) VALUES (?, ?, ?)";
-               
-    $stmtInv = sqlsrv_query($conn, $sqlInv, [$pid, $sucursalId, $cant, $pid, $sucursalId, $pid, $sucursalId, $cant]);
-
-    if ($stmtInv === false) {
-        sqlsrv_rollback($conn);
-        echo json_encode(["status" => "error", "message" => "Error al actualizar stock", "debug" => sqlsrv_errors()]);
-        exit;
-    }
-}
-
-sqlsrv_commit($conn);
-echo json_encode(["status" => "ok", "message" => "Entrada registrada correctamente."]);
-sqlsrv_close($conn);
 ?>

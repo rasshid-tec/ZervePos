@@ -1,8 +1,6 @@
 <?php
-ob_start();
+// php/registrar_salida.php
 header('Content-Type: application/json; charset=utf-8');
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
 
 $serverName = "zervepos-rasshid-2026.database.windows.net";
 $connectionOptions = array(
@@ -15,104 +13,119 @@ $connectionOptions = array(
 );
 
 $conn = sqlsrv_connect($serverName, $connectionOptions);
+
 if ($conn === false) {
-    ob_clean();
-    echo json_encode(["status" => "error", "message" => "Error de conexión"]);
+    echo json_encode([
+        "status" => "error",
+        "message" => "Error de conexión a la base de datos"
+    ]);
     exit;
 }
 
-$body            = json_decode(file_get_contents("php://input"), true);
-$sucursalId      = (int)$body['sucursalId'];
-$tipo            = $body['tipo'];
-$motivo          = $body['motivo'];
-$productos       = $body['productos'];
-$sucursalDestino = isset($body['sucursalDestino']) ? (int)$body['sucursalDestino'] : null;
-$empleadoId      = 1;
+try {
+    // Obtener datos del POST
+    $data = json_decode(file_get_contents("php://input"), true);
 
-sqlsrv_begin_transaction($conn);
-
-// ── 1. Insertar Salida ────────────────────────────────────────
-$sqlSalida = "INSERT INTO Salidas (SucursalId, EmpleadoId, Tipo, Motivo, Fecha)
-              VALUES (?, ?, ?, ?, GETDATE());
-              SELECT SCOPE_IDENTITY() AS NuevoId;";
-
-$stmtS = sqlsrv_query($conn, $sqlSalida, [$sucursalId, $empleadoId, $tipo, $motivo]);
-
-if ($stmtS === false) {
-    sqlsrv_rollback($conn);
-    ob_clean();
-    echo json_encode(["status" => "error", "message" => "Error en Salidas", "debug" => sqlsrv_errors()]);
-    exit;
-}
-
-sqlsrv_next_result($stmtS);
-$rowS     = sqlsrv_fetch_array($stmtS, SQLSRV_FETCH_ASSOC);
-$salidaId = $rowS['NuevoId'];
-
-// ── 2. Detalles e Inventario ──────────────────────────────────
-foreach ($productos as $p) {
-    $pid  = (int)$p['ProductoId'];
-    $cant = (int)$p['Cantidad'];
-
-    // Verificar stock suficiente
-    $sqlCheck  = "SELECT Inventario FROM Inventario WHERE ProductoId = ? AND SucursalId = ?";
-    $stmtCheck = sqlsrv_query($conn, $sqlCheck, [$pid, $sucursalId]);
-    $rowCheck  = sqlsrv_fetch_array($stmtCheck, SQLSRV_FETCH_ASSOC);
-
-    if (!$rowCheck || $rowCheck['Inventario'] < $cant) {
-        sqlsrv_rollback($conn);
-        ob_clean();
-        echo json_encode(["status" => "error", "message" => "Stock insuficiente del producto ID $pid"]);
-        exit;
+    if (!$data) {
+        throw new Exception("Datos inválidos");
     }
 
-    // Insertar DetallesSalida
-    $sqlDet  = "INSERT INTO DetallesSalida (SalidaId, ProductoId, Cantidad) VALUES (?, ?, ?)";
-    $stmtDet = sqlsrv_query($conn, $sqlDet, [$salidaId, $pid, $cant]);
+    $sucursalId = intval($data['sucursalId']);
+    $empleadoId = intval($data['empleadoId']);
+    $tipo = $data['tipo'];
+    $motivo = $data['motivo'] ?? null;
+    $detalles = $data['detalles'] ?? [];
+    $fecha = date('Y-m-d H:i:s');
 
-    if ($stmtDet === false) {
-        sqlsrv_rollback($conn);
-        ob_clean();
-        echo json_encode(["status" => "error", "message" => "Error en DetallesSalida", "debug" => sqlsrv_errors()]);
-        exit;
+    // Validaciones
+    if (!$sucursalId || !$empleadoId || !$tipo || empty($detalles)) {
+        throw new Exception("Faltan datos requeridos");
     }
 
-    // Restar inventario en sucursal origen
-    $sqlResta  = "UPDATE Inventario SET Inventario = Inventario - ? WHERE ProductoId = ? AND SucursalId = ?";
-    $stmtResta = sqlsrv_query($conn, $sqlResta, [$cant, $pid, $sucursalId]);
+    // Iniciar transacción
+    sqlsrv_begin_transaction($conn);
 
-    if ($stmtResta === false) {
-        sqlsrv_rollback($conn);
-        ob_clean();
-        echo json_encode(["status" => "error", "message" => "Error al actualizar inventario origen", "debug" => sqlsrv_errors()]);
-        exit;
+    // Insertar la salida
+    $sqlSalida = "INSERT INTO [dbo].[Salidas] (SucursalId, EmpleadoId, Tipo, Motivo, Fecha)
+                  VALUES (?, ?, ?, ?, ?)";
+    
+    $stmtSalida = sqlsrv_query($conn, $sqlSalida, [$sucursalId, $empleadoId, $tipo, $motivo, $fecha]);
+
+    if ($stmtSalida === false) {
+        throw new Exception("Error al insertar salida");
     }
 
-    // Si es transferencia, sumar en sucursal destino
-    if ($tipo === 'TRANSFERENCIA' && $sucursalDestino) {
-        $sqlTransf = "
-            IF EXISTS (SELECT 1 FROM Inventario WHERE ProductoId = ? AND SucursalId = ?)
-                UPDATE Inventario SET Inventario = Inventario + ? WHERE ProductoId = ? AND SucursalId = ?
-            ELSE
-                INSERT INTO Inventario (ProductoId, SucursalId, Inventario) VALUES (?, ?, ?)
-        ";
-        $stmtTransf = sqlsrv_query($conn, $sqlTransf, [
-            $pid, $sucursalDestino,
-            $cant, $pid, $sucursalDestino,
-            $pid, $sucursalDestino, $cant
-        ]);
+    // Obtener el ID de la salida insertada
+    $sqlGetId = "SELECT @@IDENTITY AS SalidaId";
+    $stmtGetId = sqlsrv_query($conn, $sqlGetId);
+    $row = sqlsrv_fetch_array($stmtGetId, SQLSRV_FETCH_ASSOC);
+    $salidaId = intval($row['SalidaId']);
+    sqlsrv_free_stmt($stmtGetId);
 
-        if ($stmtTransf === false) {
-            sqlsrv_rollback($conn);
-            ob_clean();
-            echo json_encode(["status" => "error", "message" => "Error en transferencia", "debug" => sqlsrv_errors()]);
-            exit;
+    // Insertar detalles y actualizar inventario
+    foreach ($detalles as $detalle) {
+        $productoId = intval($detalle['productoId']);
+        $cantidad = intval($detalle['cantidad']);
+
+        // Validar que hay stock disponible
+        $sqlCheckStock = "SELECT Inventario FROM [dbo].[Inventario] 
+                         WHERE ProductoId = ? AND SucursalId = ?";
+        $stmtCheck = sqlsrv_query($conn, $sqlCheckStock, [$productoId, $sucursalId]);
+        
+        if ($stmtCheck) {
+            $rowStock = sqlsrv_fetch_array($stmtCheck, SQLSRV_FETCH_ASSOC);
+            sqlsrv_free_stmt($stmtCheck);
+            
+            if (!$rowStock || $rowStock['Inventario'] < $cantidad) {
+                throw new Exception("Stock insuficiente para el producto ID: $productoId");
+            }
         }
-    }
-}
 
-sqlsrv_commit($conn);
-ob_clean();
-echo json_encode(["status" => "ok", "message" => "Salida registrada con éxito."]);
-sqlsrv_close($conn);
+        // Insertar en DetalleSalida
+        $sqlDetalle = "INSERT INTO [dbo].[DetalleSalida] (SalidaId, ProductoId, Cantidad)
+                       VALUES (?, ?, ?)";
+        
+        $stmtDetalle = sqlsrv_query($conn, $sqlDetalle, [$salidaId, $productoId, $cantidad]);
+
+        if ($stmtDetalle === false) {
+            throw new Exception("Error al insertar detalle");
+        }
+
+        sqlsrv_free_stmt($stmtDetalle);
+
+        // Actualizar inventario
+        $sqlUpdateInventario = "UPDATE [dbo].[Inventario] 
+                                SET Inventario = Inventario - ?
+                                WHERE ProductoId = ? AND SucursalId = ?";
+
+        $stmtInventario = sqlsrv_query($conn, $sqlUpdateInventario, [$cantidad, $productoId, $sucursalId]);
+
+        if ($stmtInventario === false) {
+            throw new Exception("Error al actualizar inventario");
+        }
+
+        sqlsrv_free_stmt($stmtInventario);
+    }
+
+    // Confirmar transacción
+    sqlsrv_commit($conn);
+    sqlsrv_close($conn);
+
+    echo json_encode([
+        "status" => "ok",
+        "message" => "Salida registrada correctamente",
+        "data" => [
+            "salidaId" => $salidaId
+        ]
+    ]);
+
+} catch (Exception $e) {
+    sqlsrv_rollback($conn);
+    sqlsrv_close($conn);
+    echo json_encode([
+        "status" => "error",
+        "message" => $e->getMessage()
+    ]);
+    exit;
+}
 ?>

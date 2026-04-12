@@ -214,12 +214,11 @@ const props = defineProps({
 const emit = defineEmits(['cerrar', 'usuario-creado']);
 
 const authStore = useAuthStore ();
-const {
-  sucursalesDisponibles,
-  rolesPermitidos,
-  cargando,
-  crearUsuario
-} = useUsuarios();
+const usuariosComposable = useUsuarios();
+const rolesPermitidos = usuariosComposable.rolesPermitidos;
+const sucursalesDisponibles = usuariosComposable.sucursalesDisponibles;
+const cargando = usuariosComposable.cargando;
+const crearUsuario = usuariosComposable.crearUsuario;
 
 const formulario = ref({
   nombre: '',
@@ -272,8 +271,10 @@ watch(() => props.visible, async (nuevoValor) => {
 });
 
 const cargarDatos = async () => {
-  await useUsuarios().obtenerRolesPermitidos();
-  await useUsuarios().obtenerSucursalesDisponibles();
+  console.log('Antes de cargar roles:', rolesPermitidos.value);
+  await usuariosComposable.obtenerRolesPermitidos();
+  console.log('Después de cargar roles:', rolesPermitidos.value);
+  await usuariosComposable.obtenerSucursalesDisponibles();
 };
 
 const cargarRolesPermitidos = async () => {
@@ -319,7 +320,9 @@ const guardar = async () => {
   if (resultado.success) {
     emit('usuario-creado', { empleadoId: resultado.empleadoId });
     cerrar();
-  }
+  }else {
+  console.error('Error:', resultado.message);  // ✅ Agrega esto para ver el error
+}
 };
 
 const cerrar = () => {
