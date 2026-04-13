@@ -1,12 +1,12 @@
 import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore }     from '../stores/auth'
 import { useSucursalStore } from '../stores/sucursal'
-import { useToast } from './useToast'
+import { useToast }         from './useToast'
 
 export function useSucursales() {
-  const auth = useAuthStore()
+  const auth         = useAuthStore()
   const sucursalStore = useSucursalStore()
-  const toast = useToast()
+  const toast        = useToast()
 
   const cargando = ref(false)
 
@@ -16,10 +16,7 @@ export function useSucursales() {
       const res = await fetch('/php/obtener_sucursales.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          empleadoId: auth.empleadoId,
-          rol: auth.rol
-        })
+        body: JSON.stringify({ UsuariosId: auth.usuarioId })
       })
       const data = await res.json()
       if (data.status === 1) {
@@ -36,8 +33,8 @@ export function useSucursales() {
 
   const seleccionarSucursal = (sucursal) => {
     sucursalStore.setSucursalActiva(sucursal)
-    auth.setSucursal(sucursal.sucursalId, sucursal.nombre)
-    toast.success(`Sucursal cambiada a ${sucursal.nombre}`)
+    auth.setSucursal(sucursal.SucursalId, sucursal.NombreSucursal)
+    toast.success(`Sucursal cambiada a ${sucursal.NombreSucursal}`)
   }
 
   return { cargando, cargarSucursales, seleccionarSucursal }

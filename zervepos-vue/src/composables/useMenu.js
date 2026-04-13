@@ -33,7 +33,7 @@ export function useMenu() {
   const router = useRouter()
 
   const menuItems = computed(() => {
-    const role = normalizeRole(auth.rol)   // ← corregido
+    const role = normalizeRole(auth.rol)
     return MENUS[role] ?? []
   })
 

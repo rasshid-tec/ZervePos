@@ -11,10 +11,10 @@
       </option>
       <option
         v-for="s in sucursalStore.sucursales"
-        :key="s.sucursalId"
-        :value="s.sucursalId"
+        :key="s.SucursalId"
+        :value="s.SucursalId"
       >
-        {{ s.nombre }}
+        {{ s.NombreSucursal }}
       </option>
     </select>
   </div>
@@ -22,32 +22,36 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore }     from '../stores/auth'
 import { useSucursalStore } from '../stores/sucursal'
-import { useSucursales } from '../composables/useSucursales'
+import { useSucursales }    from '../composables/useSucursales'
 
-const auth = useAuthStore()
+const auth         = useAuthStore()
 const sucursalStore = useSucursalStore()
 const { cargando, cargarSucursales, seleccionarSucursal } = useSucursales()
 
 const mostrar = computed(() => auth.rol === 'Dueño' || auth.rol === 'Administrador')
-const sucursalIdSeleccionada = ref(sucursalStore.sucursalActiva?.sucursalId || auth.sucursalId || 0)
+const sucursalIdSeleccionada = ref(sucursalStore.sucursalActiva?.SucursalId || 0)
 
 onMounted(async () => {
   if (mostrar.value && sucursalStore.sucursales.length === 0) {
     await cargarSucursales()
   }
+  // Asignar la sucursal activa después de cargar la lista
+  if (sucursalStore.sucursalActiva?.SucursalId) {
+    sucursalIdSeleccionada.value = sucursalStore.sucursalActiva.SucursalId
+  }
 })
-
 watch(() => sucursalStore.sucursalActiva, (val) => {
-  sucursalIdSeleccionada.value = val?.sucursalId || 0
+  sucursalIdSeleccionada.value = val?.SucursalId || 0
 })
 
 const onCambio = () => {
-  const s = sucursalStore.sucursales.find(x => x.sucursalId === sucursalIdSeleccionada.value)
+  const s = sucursalStore.sucursales.find(x => x.SucursalId === sucursalIdSeleccionada.value)
   if (s) seleccionarSucursal(s)
 }
 </script>
+
 <style scoped>
 .selector-sucursal {
   display: flex;

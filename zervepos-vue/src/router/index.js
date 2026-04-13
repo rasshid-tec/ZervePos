@@ -6,45 +6,30 @@ import Dashboard           from '../views/Dashboard.vue'
 import ComingSoon          from '../views/ComingSoon.vue'
 import GestionUsuarios     from '../views/GestionUsuarios.vue'
 
-// Importar componentes de Inventario
-import MenuInventario      from '../views/MenuInventario.vue'
-import Inventario          from '../views/Inventario.vue'
-import Entradas            from '../views/Entradas.vue'
-import Salidas             from '../views/Salidas.vue'
-import GestionSucursales   from '../views/GestionSucursales.vue'
-
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/',                    redirect: '/login' },
-    { path: '/login',               name: 'login',               component: Login },
-    { path: '/seleccionar-sucursal',name: 'seleccionar-sucursal',component: SeleccionarSucursal },
-
+    { path: '/',                     redirect: '/login' },
+    { path: '/login',                name: 'login',                component: Login },
+    { path: '/seleccionar-sucursal', name: 'seleccionar-sucursal', component: SeleccionarSucursal },
     {
       path: '/app',
       component: MainLayout,
       children: [
-        { path: '',          redirect: 'dashboard' },
-        { path: 'dashboard', name: 'dashboard',  component: Dashboard  },
-        { path: 'ventas',    name: 'ventas',     component: ComingSoon },
-        { path: 'productos', name: 'productos',  component: ComingSoon },
-        { path: 'clientes',  name: 'clientes',   component: ComingSoon },
-        
-        // Rutas de Inventario con subrutas
-        {
-          path: 'inventario',
-          name: 'inventario',
-          component: MenuInventario,
-          children: [
-            { path: 'gestion',    name: 'inventario-gestion',    component: Inventario },
-            { path: 'entradas',   name: 'inventario-entradas',   component: Entradas },
-            { path: 'salidas',    name: 'inventario-salidas',    component: Salidas },
-            { path: 'sucursales', name: 'inventario-sucursales', component: GestionSucursales }
-          ]
-        },
-        
-        { path: 'usuarios',  name: 'usuarios',   component: GestionUsuarios },
-        { path: 'reportes',  name: 'reportes',   component: ComingSoon },
+        { path: '',                    redirect: 'dashboard' },
+        { path: 'dashboard',           name: 'dashboard',           component: Dashboard },
+        { path: 'ventas',              name: 'ventas',              component: ComingSoon },
+        { path: 'productos',           name: 'productos',           component: () => import('../views/productos/Productos.vue') },
+        { path: 'productos/nuevo',     name: 'productos-nuevo',     component: () => import('../views/productos/RegistrarProducto.vue') },
+        { path: 'productos/editar',    name: 'productos-editar',    component: () => import('../views/productos/EditarProducto.vue') },
+        { path: 'productos/eliminar',  name: 'productos-eliminar',  component: () => import('../views/productos/EliminarProducto.vue') },
+        { path: 'clientes',            name: 'clientes',            component: () => import('../views/clientes/Clientes.vue') },
+        { path: 'clientes/nuevo',      name: 'clientes-nuevo',      component: () => import('../views/clientes/RegistrarCliente.vue') },
+        { path: 'clientes/editar',     name: 'clientes-editar',     component: () => import('../views/clientes/EditarCliente.vue') },
+        { path: 'clientes/eliminar',   name: 'clientes-eliminar',   component: () => import('../views/clientes/EliminarCliente.vue') },
+        { path: 'inventario',          name: 'inventario',          component: () => import('../views/Inventario.vue') },
+        { path: 'usuarios',            name: 'usuarios',            component: GestionUsuarios },
+        { path: 'reportes',            name: 'reportes',            component: ComingSoon },
       ],
     },
   ],

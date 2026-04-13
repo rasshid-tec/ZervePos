@@ -8,7 +8,7 @@ $connectionOptions = [
     "Uid"      => "adminZerve",
     "PWD"      => "ContraZervePos1234",
     "TrustServerCertificate" => true,
-    "CharacterSet" => "UTF-8" // <-- ¡ESTA ES LA MAGIA QUE FALTABA!
+    "CharacterSet" => "UTF-8" 
 ];
 
 // 3. Intentamos la conexión

@@ -1,66 +1,52 @@
+
 <?php
-// insertar_cliente.php
-header('Content-Type: application/json; charset=utf-8');
+require_once 'conexion.php';
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
-$serverName = "zervepos-rasshid-2026.database.windows.net";
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
-$connectionOptions = array(
-    "Database"             => "ZervePos",
-    "Uid"                  => "adminZerve",
-    "PWD"                  => "ContraZervePos1234",
-    "CharacterSet"         => "UTF-8",
-    "TrustServerCertificate" => false,
-    "Encrypt"              => true
-);
+$data             = json_decode(file_get_contents("php://input"), true);
+$negocio          = $data["negocio"]          ?? '';
+$nombreCliente    = $data["nombreCliente"]    ?? '';
+$tituloContacto   = $data["tituloContacto"]   ?? '';
+$direccion        = $data["direccion"]        ?? '';
+$ciudad           = $data["ciudad"]           ?? '';
+$colonia          = $data["colonia"]          ?? '';
+$codigoPostal     = $data["codigoPostal"]     ?? '';
+$telefono         = $data["telefono"]         ?? '';
+$correo           = $data["correo"]           ?? '';
+$creditoPermitido = $data["creditoPermitido"] ?? 0;
+$categoriaId      = $data["categoriaId"]      ?? null;
+$status           = 0;
 
-$conn = sqlsrv_connect($serverName, $connectionOptions);
+$params = [
+    [$negocio,          SQLSRV_PARAM_IN],
+    [$nombreCliente,    SQLSRV_PARAM_IN],
+    [$tituloContacto,   SQLSRV_PARAM_IN],
+    [$direccion,        SQLSRV_PARAM_IN],
+    [$ciudad,           SQLSRV_PARAM_IN],
+    [$colonia,          SQLSRV_PARAM_IN],
+    [$codigoPostal,     SQLSRV_PARAM_IN],
+    [$telefono,         SQLSRV_PARAM_IN],
+    [$correo,           SQLSRV_PARAM_IN],
+    [$creditoPermitido, SQLSRV_PARAM_IN],
+    [$categoriaId,      SQLSRV_PARAM_IN],
+    [&$status, SQLSRV_PARAM_OUT, SQLSRV_PHPTYPE_INT, SQLSRV_SQLTYPE_INT]
+];
 
-if ($conn === false) {
-    echo json_encode(["status" => "error", "message" => sqlsrv_errors()[0]['message']]);
-    exit;
-}
-
-$data = json_decode(file_get_contents("php://input"), true);
-
-// Validaciones básicas
-if (empty($data['ClienteId']) || empty($data['Negocio'])) {
-    echo json_encode(["status" => "error", "message" => "El ID y el nombre del negocio son obligatorios."]);
-    exit;
-}
-
-$sql = "INSERT INTO Clientes 
-            (ClienteId, Negocio, NombreCliente, TituloContacto, Direccion, Ciudad, Colonia, CodigoPostal, Telefono, Correo)
-        VALUES 
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-$params = array(
-    trim($data['ClienteId']),
-    trim($data['Negocio']),
-    isset($data['NombreCliente'])  ? trim($data['NombreCliente'])  : null,
-    isset($data['TituloContacto']) ? trim($data['TituloContacto']) : null,
-    isset($data['Direccion'])      ? trim($data['Direccion'])      : null,
-    isset($data['Ciudad'])         ? trim($data['Ciudad'])         : null,
-    isset($data['Colonia'])        ? trim($data['Colonia'])        : null,
-    isset($data['CodigoPostal'])   ? trim($data['CodigoPostal'])   : null,
-    isset($data['Telefono'])       ? trim($data['Telefono'])       : null,
-    isset($data['Correo'])         ? trim($data['Correo'])         : null
-);
-
+$sql  = "{CALL sp_InsertarCliente(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 $stmt = sqlsrv_query($conn, $sql, $params);
 
 if ($stmt === false) {
-    $error = sqlsrv_errors()[0];
-    // Error de clave duplicada (ID ya existe)
-    if ($error['code'] == 2627) {
-        echo json_encode(["status" => "error", "message" => "Ya existe un cliente con ese ID."]);
-    } else {
-        echo json_encode(["status" => "error", "message" => $error['message']]);
-    }
+    echo json_encode(["status" => 0, "debug" => sqlsrv_errors()]);
     exit;
 }
 
-echo json_encode(["status" => "ok", "message" => "Cliente registrado correctamente."]);
-
+while (sqlsrv_next_result($stmt)) {}
+echo json_encode(["status" => $status, "debug" => sqlsrv_errors()]);
 sqlsrv_free_stmt($stmt);
 sqlsrv_close($conn);
 ?>

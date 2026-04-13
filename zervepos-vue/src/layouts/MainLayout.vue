@@ -4,7 +4,7 @@
     <div class="layout-body">
       <header class="layout-header">
         <h1 class="welcome-text">Bienvenido, {{ auth.usuario }}</h1>
-        <div class="header-actions">
+        <div class="header-derecho">
           <SelectorSucursal />
           <button class="btn-cambiar-sesion" @click="mostrarCambioSesion = true">
             Cambiar sesión
@@ -16,28 +16,33 @@
       </main>
     </div>
 
-    <CambiarSesionDialog v-model:visible="mostrarCambioSesion" />
+    <CambiarSesionDialog
+      :visible="mostrarCambioSesion"
+      @update:visible="mostrarCambioSesion = $event"
+    />
+
     <AlertaToast ref="toastRef" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import SidebarMenu from '../components/SidebarMenu.vue'
-import SelectorSucursal from '../components/SelectorSucursal.vue'
-import CambiarSesionDialog from '../components/CambiarSesionDialog.vue'
-import AlertaToast from '../components/AlertaToast.vue'
-import { useAuthStore } from '../stores/auth'
-import { registrarToast } from '../composables/useToast'
+import { ref, onMounted }      from 'vue'
+import SidebarMenu             from '../components/SidebarMenu.vue'
+import SelectorSucursal        from '../components/SelectorSucursal.vue'
+import CambiarSesionDialog     from '../components/CambiarSesionDialog.vue'
+import AlertaToast             from '../components/AlertaToast.vue'
+import { useAuthStore }        from '../stores/auth'
+import { registrarToast }      from '../composables/useToast'
 
-const auth = useAuthStore()
+const auth                = useAuthStore()
 const mostrarCambioSesion = ref(false)
-const toastRef = ref(null)
+const toastRef            = ref(null)
 
 onMounted(() => {
   registrarToast(toastRef.value)
 })
 </script>
+
 <style scoped>
 .layout {
   display: flex;
@@ -57,7 +62,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
 }
 .welcome-text {
   color: #fff;
@@ -65,7 +69,7 @@ onMounted(() => {
   font-weight: 700;
   margin: 0;
 }
-.header-actions {
+.header-derecho {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -79,7 +83,8 @@ onMounted(() => {
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 .btn-cambiar-sesion:hover {
   background: rgba(255, 255, 255, 0.18);
