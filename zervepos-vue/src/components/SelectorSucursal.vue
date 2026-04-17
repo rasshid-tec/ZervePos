@@ -2,7 +2,7 @@
   <div v-if="mostrar" class="selector-sucursal">
     <select
       v-model="sucursalIdSeleccionada"
-      :disabled="cargando"
+      :disabled="cargando || verificando"
       class="select-sucursal"
       @change="onCambio"
     >
@@ -22,33 +22,63 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter }        from 'vue-router'
 import { useAuthStore }     from '../stores/auth'
 import { useSucursalStore } from '../stores/sucursal'
 import { useSucursales }    from '../composables/useSucursales'
+import { useToast }         from '../composables/useToast'
 
-const auth         = useAuthStore()
+const router        = useRouter()
+const auth          = useAuthStore()
 const sucursalStore = useSucursalStore()
+const toast         = useToast()
 const { cargando, cargarSucursales, seleccionarSucursal } = useSucursales()
 
-const mostrar = computed(() => auth.rol === 'Dueño' || auth.rol === 'Administrador')
+const mostrar                = computed(() => auth.rol === 'Dueño' || auth.rol === 'Administrador')
 const sucursalIdSeleccionada = ref(sucursalStore.sucursalActiva?.SucursalId || 0)
+const verificando            = ref(false)
 
 onMounted(async () => {
   if (mostrar.value && sucursalStore.sucursales.length === 0) {
     await cargarSucursales()
   }
-  // Asignar la sucursal activa después de cargar la lista
   if (sucursalStore.sucursalActiva?.SucursalId) {
     sucursalIdSeleccionada.value = sucursalStore.sucursalActiva.SucursalId
   }
 })
+
 watch(() => sucursalStore.sucursalActiva, (val) => {
   sucursalIdSeleccionada.value = val?.SucursalId || 0
 })
 
-const onCambio = () => {
+async function onCambio() {
   const s = sucursalStore.sucursales.find(x => x.SucursalId === sucursalIdSeleccionada.value)
-  if (s) seleccionarSucursal(s)
+  if (!s) return
+
+  verificando.value = true
+  seleccionarSucursal(s)
+
+  try {
+    const res  = await fetch('/php/verificar_caja.php', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ sucursalId: s.SucursalId })
+    })
+    const data = await res.json()
+
+    if (data.cajaAbierta && data.CajaId) {
+      sessionStorage.setItem('cajaId', data.CajaId)
+      toast.success(`Sucursal cambiada a ${s.NombreSucursal}`)
+    } else {
+      sessionStorage.removeItem('cajaId')
+      toast.warn(`No hay caja abierta en ${s.NombreSucursal}`)
+      router.push('/caja/abrir')
+    }
+  } catch {
+    toast.error('Error al verificar caja')
+  } finally {
+    verificando.value = false
+  }
 }
 </script>
 

@@ -12,7 +12,7 @@
         :to="card.route"
         class="card"
       >
-        <span class="card-icon">{{ card.icon }}</span>
+        <span class="card-icon" v-html="ICONS[card.icon]"></span>
         <div>
           <h3 class="card-title">{{ card.label }}</h3>
           <p class="card-desc">{{ card.description }}</p>
@@ -27,6 +27,7 @@ import { computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useMenu } from '../composables/useMenu'
 import { normalizeRole, ROLE_LABELS } from '../utils/roles'
+import { ICONS } from '../utils/icons'
 
 const auth = useAuthStore()
 const { menuItems } = useMenu()
@@ -38,10 +39,12 @@ const DESCRIPTIONS = {
   Inventario: 'Consultar el inventario por sucursal.',
   Usuarios:   'Gestionar usuarios del sistema.',
   Reportes:   'Ver reportes y estadísticas.',
+  Créditos:   'Gestionar créditos de clientes.',
+  Tickets:    'Consultar y reimprimir tickets.',
 }
 
 const roleLabel = computed(() =>
-  ROLE_LABELS[normalizeRole(auth.rol)] ?? auth.rol ?? ''  // ← corregido
+  ROLE_LABELS[normalizeRole(auth.rol)] ?? auth.rol ?? ''
 )
 
 const dashboardCards = computed(() =>
@@ -95,7 +98,9 @@ const dashboardCards = computed(() =>
 }
 
 .card-icon {
-  font-size: 1.9rem;
+  color: #1a3a4a;
+  display: flex;
+  align-items: center;
 }
 
 .card-title {

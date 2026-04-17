@@ -2,7 +2,7 @@
   <aside class="sidebar">
 
     <div class="sidebar-brand">
-      <span class="brand-icon">⚡</span>
+      <span class="brand-icon" v-html="ICONS.bolt"></span>
       <span class="brand-name">ZervePOS</span>
     </div>
 
@@ -14,14 +14,14 @@
         class="nav-item"
         active-class="nav-item--active"
       >
-        <span class="nav-icon">{{ item.icon }}</span>
+        <span class="nav-icon" v-html="ICONS[item.icon]"></span>
         <span class="nav-label">{{ item.label }}</span>
       </RouterLink>
     </nav>
 
     <div class="sidebar-footer">
       <button class="btn-logout" @click="logout">
-        <span class="nav-icon">🚪</span>
+        <span class="nav-icon" v-html="ICONS.logout"></span>
         <span>Cerrar Sesión</span>
       </button>
     </div>
@@ -31,6 +31,7 @@
 
 <script setup>
 import { useMenu } from '../composables/useMenu'
+import { ICONS } from '../utils/icons'
 
 const { menuItems, logout } = useMenu()
 </script>
@@ -58,7 +59,9 @@ const { menuItems, logout } = useMenu()
 }
 
 .brand-icon {
-  font-size: 1.4rem;
+  color: #f97316;
+  display: flex;
+  align-items: center;
 }
 
 .brand-name {
@@ -101,9 +104,10 @@ const { menuItems, logout } = useMenu()
 }
 
 .nav-icon {
-  font-size: 1.1rem;
   width: 22px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 

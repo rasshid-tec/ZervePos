@@ -6,6 +6,13 @@
         <h1 class="welcome-text">Bienvenido, {{ auth.usuario }}</h1>
         <div class="header-derecho">
           <SelectorSucursal />
+          <button
+            v-if="route.name === 'ventas'"
+            class="btn-cerrar-caja"
+            @click="router.push('/caja/cerrar')"
+          >
+            Cerrar Caja
+          </button>
           <button class="btn-cambiar-sesion" @click="mostrarCambioSesion = true">
             Cambiar sesión
           </button>
@@ -27,6 +34,7 @@
 
 <script setup>
 import { ref, onMounted }      from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SidebarMenu             from '../components/SidebarMenu.vue'
 import SelectorSucursal        from '../components/SelectorSucursal.vue'
 import CambiarSesionDialog     from '../components/CambiarSesionDialog.vue'
@@ -35,6 +43,8 @@ import { useAuthStore }        from '../stores/auth'
 import { registrarToast }      from '../composables/useToast'
 
 const auth                = useAuthStore()
+const route               = useRoute()
+const router              = useRouter()
 const mostrarCambioSesion = ref(false)
 const toastRef            = ref(null)
 
@@ -73,6 +83,22 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.btn-cerrar-caja {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-cerrar-caja:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 .btn-cambiar-sesion {
   background: rgba(255, 255, 255, 0.1);

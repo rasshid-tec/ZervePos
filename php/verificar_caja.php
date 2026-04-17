@@ -28,7 +28,7 @@ if (!$sucursalId) {
     exit;
 }
 
-$sql    = "SELECT TOP 1 CajaId FROM Caja WHERE SucursalId = ? AND Estado = 1;
+$sql    = "SELECT TOP 1 CajaId FROM Caja WHERE SucursalId = ? AND Estado = 1";
 $stmt   = sqlsrv_query($conn, $sql, [$sucursalId]);
 
 if ($stmt === false) {
